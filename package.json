@@ -1,0 +1,15 @@
+{
+  "name": "huebris",
+  "version": "0.0.1",
+  "dependencies": {
+    "aggregation": "^1.2.1",
+    "chalk": "^2.3.0",
+    "clear": "0.0.1",
+    "clui": "^0.3.6",
+    "dash-button": "^3.2.0",
+    "figlet": "^1.2.0",
+    "huejay": "^1.7.4",
+    "inquirer": "^5.0.1",
+    "node-hue-api": "^2.4.2"
+  }
+}
