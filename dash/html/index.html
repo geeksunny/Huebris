@@ -167,6 +167,8 @@
                         socket.emit('toggle', group, 'reset');
                         break;
                     case 'presets':
+                        socket.emit('presets', group, 'down');
+                        break;
                     default:
                         break;
                 }

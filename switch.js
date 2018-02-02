@@ -253,7 +253,7 @@ class SceneCycler extends Cycler {
     }
 
     performAction(item, argument) {
-        let changed = this.up();
+        let changed = (argument === 'down') ? this.down() : this.up();
         if (changed) {
             item[this.property] = this.currentItem;
             return true;

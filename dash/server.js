@@ -109,7 +109,7 @@ io.on('connection', (socket) => {
     };
 
     socket.on('toggle', (group, action) => {
-        console.log('Toggle invoked. '+group);
+        console.log('Toggle invoked. '+group+' | action: '+action);
         let _switch = switches[group];
         _switch.exec(action)();
     });
@@ -120,10 +120,10 @@ io.on('connection', (socket) => {
         _switch.exec(action)();
     });
 
-    socket.on('presets', (group) => {
-        console.log('Scene Cycler invoked. '+group);
+    socket.on('presets', (group, action) => {
+        console.log('Presets invoked. '+group+' | action: '+action);
         let _switch = sceneCyclers[group];
-        _switch.exec()();
+        _switch.exec(action)();
     })
 });
 
