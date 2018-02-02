@@ -61,17 +61,10 @@ class Switch {
 
     reset(item) {
         if (this.defaults) {
-            let changed = false;
             for (let property in this.defaults) {
-                let changing = item[property] !== this.defaults[property];
-                if (changing) {
-                    item[property] = this.defaults[property];
-                    changed = true;
-                }
+                item[property] = this.defaults[property];
             }
-            if (changed) {
-                return true;
-            }
+            return true;
         }
         return false;
     }
