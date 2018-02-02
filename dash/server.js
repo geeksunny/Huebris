@@ -130,3 +130,18 @@ io.on('connection', (socket) => {
 http.listen(3000, function() {
     console.log('listening on *:3000');
 });
+
+try {
+    let dashButtons = {
+        deskToggle: new Switches.LightDashButtonToggleSwitch({
+            name: 'Desk Toggle',
+            description: 'Nerf button',
+            client: hueClient,
+            mac: '18:74:2e:8b:84:ab',
+            ids: [8]
+        })
+    };
+} catch (err) {
+    console.log('DASH BUTTON ERROR! Probably wasn\'t run with sudo.');
+    console.log(err);
+}
