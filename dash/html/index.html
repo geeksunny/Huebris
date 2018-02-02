@@ -140,13 +140,13 @@
                 // console.log(`TAP :: Action: ${action} | Group: ${group}`);
                 switch (action) {
                     case 'toggle':
-                        socket.emit('toggle', group);
+                    case 'presets':
+                        socket.emit(action, group);
                         break;
                     case 'up':
                     case 'down':
                         socket.emit('dimmer', group, action);
                         break;
-                    case 'presets':
                     default:
                         break;
                 }
@@ -156,6 +156,20 @@
                 let action = button.dataset.action;
                 let group = button.parentElement.dataset.group;
                 // console.log(`TAP AND HOLD :: Action: ${action} | Group: ${group}`);
+                switch (action) {
+                    case 'up':
+                        socket.emit('dimmer', group, 'top');
+                        break;
+                    case 'down':
+                        socket.emit('dimmer', group, 'bottom');
+                        break;
+                    case 'toggle':
+                        socket.emit('toggle', group, 'reset');
+                        break;
+                    case 'presets':
+                    default:
+                        break;
+                }
             }
 
             let buttons = document.querySelectorAll('article.ui-btn .button');
