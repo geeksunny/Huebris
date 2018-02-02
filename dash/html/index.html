@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1">
+    <title>Tile Dash</title>
+    <link rel="stylesheet" href="css/bulma.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script defer src="https://use.fontawesome.com/releases/v5.0.0/js/all.js"></script>
+    <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', () => {
+            const ZOOM_LEVEL = .75; // Must match body's zoom CSS level
+
+            class TapManager {
+                constructor() {
+                    // TODO: with only one `touching` does this limit to one button press at a time? is that desirable?
+                    this.touching = false;
+                    this.timeout = 500; // 1000?
+                }
+
+                get onTap() {
+                    return this._onTap;
+                }
+
+                set onTap(callback) {
+                    this._onTap = callback;
+                }
+
+                get onTapAndHold() {
+                    return this._onTapAndHold;
+                }
+
+                set onTapAndHold(callback) {
+                    this._onTapAndHold = callback;
+                }
+
+                static touches(touch, element) {
+                    let {top, bottom, left, right} = element.getBoundingClientRect();
+                    let {clientX, clientY} = touch;
+
+                    return (clientX >= left * ZOOM_LEVEL && clientX <= right * ZOOM_LEVEL)
+                        && (clientY >= top * ZOOM_LEVEL && clientY <= bottom * ZOOM_LEVEL);
+                }
+
+                register(button) {
+                    button.onclick = (event) => {
+                        event.preventDefault();
+                        console.log('onclick');
+                    };
+                    button.ontouchstart = this._handleTouchStart(button);
+                    button.ontouchend = this._handleTouchEnd(button);
+                    button.ontouchmove = this._handleTouchMove(button);
+                    button.ontouchcancel = this._handleTouchCancel(button);
+                }
+
+                // unregister(button) {
+                //     // TODO: button.removeEventListener
+                //     // TODO: register(btn) will need to store the generated EventHandler functions to be able to remove
+                //     // TODO: OR could button.ontouchstart = undefined; work? test this.
+                // }
+
+                _handleTouchStart(button) {
+                    return (event) => {
+                        event.preventDefault();
+                        button.classList.add('is-hovered');
+                        this.touching = true;
+                        button.tapMgrTimeout = Date.now();
+                    }
+                }
+
+                _handleTouchEnd(button) {
+                    let parent = this;
+                    return (event) => {
+                        event.preventDefault();
+                        if (!this.touching) {
+                            button.classList.remove('is-hovered');
+                            delete button.tapMgrTimeout;
+                            return;
+                        }
+
+                        button.classList.add('is-active');
+                        setTimeout(() => {
+                            button.classList.remove('is-hovered', 'is-active');
+                        }, 50);
+
+                        let now = Date.now();
+                        // console.log(`now: ${now} - timeout: ${button.tapMgrTimeout} = ${(now - button.tapMgrTimeout)}`);
+                        let delay = now - button.tapMgrTimeout;
+                        // console.log(`Delay: ${delay}`);
+                        if (delay >= parent.timeout) {
+                            if (parent.onTapAndHold) {
+                                parent.onTapAndHold(button);
+                            }
+                        } else {
+                            if (parent.onTap) {
+                                parent.onTap(button);
+                            }
+                        }
+                        delete button.tapMgrTimeout;
+                    }
+                }
+
+                _handleTouchMove(button) {
+                    return (event) => {
+                        // todo: test preventDefault for weird behavior
+                        // event.preventDefault();
+
+                        let touches = TapManager.touches(event.touches[0], button);
+                        if (touches !== this.touching) {
+                            this.touching = touches;
+                            if (touches) {
+                                button.classList.add('is-hovered');
+                            } else {
+                                button.classList.remove('is-hovered');
+                            }
+                        }
+                    }
+                }
+
+                _handleTouchCancel(button) {
+                    return (event) => {
+                        // console.log(event);
+                        this.touching = false;
+                        event.preventDefault();
+                        button.classList.remove('is-hovered', 'is-active');
+                        delete button.tapMgrTimeout;
+                        return true;
+                    }
+                }
+            }
+
+            const socket = io();
+            const tapMgr = new TapManager();
+            tapMgr.onTap = handleTap;
+            tapMgr.onTapAndHold = handleTapAndHold;
+
+            function handleTap(button) {
+                let action = button.dataset.action;
+                let group = button.parentElement.dataset.group;
+                // console.log(`TAP :: Action: ${action} | Group: ${group}`);
+                switch (action) {
+                    case 'toggle':
+                        socket.emit('toggle', group);
+                        break;
+                    case 'up':
+                    case 'down':
+                        socket.emit('dimmer', group, action);
+                        break;
+                    case 'presets':
+                    default:
+                        break;
+                }
+            }
+
+            function handleTapAndHold(button) {
+                let action = button.dataset.action;
+                let group = button.parentElement.dataset.group;
+                // console.log(`TAP AND HOLD :: Action: ${action} | Group: ${group}`);
+            }
+
+            let buttons = document.querySelectorAll('article.ui-btn .button');
+            console.log(JSON.stringify(buttons));
+            for (let i = 0; i < buttons.length; i++) {
+                let button = buttons[i];
+                tapMgr.register(button);
+            }
+
+            socket.on('connect', (data) => {
+                console.log('socket.io READY');
+            });
+
+            socket.on('finished', (data1, data2) => {
+                console.log('FINISHED- Action: '+data1+' | Group: '+data2);
+            });
+        });
+    </script>
+    <style type="text/css">
+        body {
+            /* Scaling base interface size */
+            zoom: 75%;
+        }
+
+        .section {
+            padding: 32px;
+        }
+
+        article.ui-label {
+            padding-right: 32px;
+            text-align: center;
+        }
+
+        article.ui-btn {
+            padding: 0px;
+        }
+
+        article.ui-btn p {
+            display: grid;
+
+            width: 100% !important;
+            height: auto !important;
+
+            padding: 0px;
+            margin: 0px !important;
+        }
+
+        article.ui-btn p svg {
+            margin: 0 auto;
+        }
+
+        article.ui-btn p:only-child {
+            padding-bottom: 10px !important;
+        }
+
+        article.ui-btn p:only-child svg,
+        article.ui-btn p:nth-child(2) svg {
+            margin: 10px auto;
+        }
+    </style>
+</head>
+<body>
+<section class="section">
+    <div class="tile is-ancestor">
+        <div class="tile is-vertical is-6">
+            <div class="tile">
+                <div class="tile is-vertical">
+                    <div class="tile is-parent">
+                        <article class="tile is-child notification is-warning">
+                            <p class="title">3:30 PM</p>
+                            <p class="subtitle">Wednesday<br />Jan 31 2018</p>
+                        </article>
+                    </div>
+                    <div class="tile is-parent">
+                        <article class="tile is-child notification is-warning">
+                            <p class="subtitle">Inside</p>
+                            <p class="title">64&deg;</p>
+                        </article>
+                    </div>
+                </div>
+                <div class="tile is-parent">
+                    <article class="tile is-child notification is-info">
+                        <p class="title">System Panel</p>
+                        <p class="subtitle">System stats, button for system settings</p>
+                    </article>
+                </div>
+            </div>
+            <div class="tile is-parent">
+                <article class="tile is-child notification is-danger">
+                    <p class="title">Weather Forecast</p>
+                    <p class="subtitle">Now / Today / Tomorrow ( / Next?)</p>
+                    <div class="content">
+                        <!-- Content -->
+                    </div>
+                </article>
+            </div>
+        </div>
+        <div class="tile is-vertical is-3">
+            <div class="tile is-child">
+                <div class="tile is-parent">
+                    <article class="tile is-child notification is-primary ui-label">
+                        <div class="title is-4">Living Room</div>
+                    </article>
+                </div>
+                <div class="tile is-parent">
+                    <article class="tile is-child notification is-primary ui-btn" data-group="6">
+                        <p class="button icon is-large is-primary" data-action="up">
+                            <i class="fas fa-3x fa-chevron-up"></i>
+                        </p>
+                        <p class="button is-large is-primary title icon" data-action="toggle">
+                            <i class="fas fa-3x fa-lightbulb"></i>
+                            ON
+                        </p>
+                        <p class="button is-large is-primary" data-action="down">
+                            <i class="fas fa-3x fa-chevron-down"></i>
+                        </p>
+                    </article>
+                </div>
+                <div class="tile is-parent">
+                    <article class="tile is-child notification is-primary ui-btn" data-group="6">
+                        <p class="button is-large is-primary title icon" data-action="presets">
+                            <i class="fas fa-3x fa-adjust"></i>
+                            PRESETS
+                        </p>
+                    </article>
+                </div>
+            </div>
+        </div>
+        <div class="tile is-vertical is-3">
+            <div class="tile is-child">
+                <div class="tile is-parent">
+                    <article class="tile is-child notification is-primary ui-label">
+                        <div class="title is-4">Bedroom</div>
+                    </article>
+                </div>
+                <div class="tile is-parent">
+                    <article class="tile is-child notification is-primary ui-btn" data-group="2">
+                        <p class="button icon is-large is-primary" data-action="up">
+                            <i class="fas fa-3x fa-chevron-up"></i>
+                        </p>
+                        <p class="button is-large is-primary title icon" data-action="toggle">
+                            <i class="far fa-3x fa-lightbulb"></i>
+                            OFF
+                        </p>
+                        <p class="button is-large is-primary" data-action="down">
+                            <i class="fas fa-3x fa-chevron-down"></i>
+                        </p>
+                    </article>
+                </div>
+                <div class="tile is-parent">
+                    <article class="tile is-child notification is-primary ui-btn" data-group="2">
+                        <p class="button is-large is-primary title icon" data-action="presets">
+                            <i class="fas fa-3x fa-adjust"></i>
+                            PRESETS
+                        </p>
+                    </article>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+</body>
+</html>
