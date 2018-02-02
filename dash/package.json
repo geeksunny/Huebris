@@ -4,7 +4,9 @@
   "dependencies": {
     "bulma": "^0.6.2",
     "express": "^4.16.2",
-    "socket.io": "^2.0.4",
-    "openweather-apis": "^3.3.5"
+    "node-raspi": "^1.0.1",
+    "nodeimu": "^2.1.9",
+    "openweather-apis": "^3.3.5",
+    "socket.io": "^2.0.4"
   }
 }
