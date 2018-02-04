@@ -7,6 +7,7 @@ const IMU = new imu.IMU();
 class Thermostat {
     constructor(farenheit = false) {
         this._farenheit = farenheit;
+        this._cpuTemperature = 0;
         this._temperature = 0;
         this._pressure = 0;
         this._humidity = 0;
@@ -22,18 +23,31 @@ class Thermostat {
                 if (err != null) {
                     reject(err);
                 } else {
-                    console.log('IMU DATA PROPERTIES :::');
-                    console.log(Object.getOwnPropertyNames(data));
+                    // console.log('IMU DATA PROPERTIES :::');
+                    // console.log(Object.getOwnPropertyNames(data));
+                    // console.log(JSON.stringify(data));
 
-                    let {temperature:hatTemp, pressure:hatPressure, humidity:hatHumidity} = data;
+                    let {
+                        temperature:hatTemp,
+                        pressure:hatPressure,
+                        humidity:hatHumidity,
+                        temperatureFromPressure:hatTempFromPressure,
+                        temperatureFromHumidity:hatTempFromHumidity
+                    } = data;
                     this._pressure = hatPressure;
                     this._humidity = hatHumidity;
 
-                    let cpuTemp = pi.getThrm();
-                    let ambientTemp = ((hatTemp + hatPressure + hatHumidity) / 3) - (cpuTemp / 5);
+                    this._cpuTemperature = pi.getThrm();
+                    let ambientTemp =
+                        ((hatTemp + hatTempFromPressure + hatTempFromHumidity) / 3) - (this._cpuTemperature / 5);
                     this._temperature = (this._farenheit) ? Thermostat.toFarenheit(ambientTemp) : ambientTemp;
 
-                    let result = { temperature: this.temperature, pressure: this.pressure, humidity: this.humidity };
+                    let result = {
+                        temperature: this._temperature,
+                        pressure: this._pressure,
+                        humidity: this._humidity,
+                        ambientTempC: ambientTemp
+                    };
                     console.log(result);
                     resolve(result);
                 }
