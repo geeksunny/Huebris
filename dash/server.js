@@ -39,6 +39,10 @@ class Feature {
         }
     }
 
+    update() {
+        // TODO: document override purpose
+    }
+
     /**
      * Verify that the feature is enabled. This method must be overridden.
      * @param data          The feature's given dataset.
@@ -66,6 +70,11 @@ class Lightswitches extends Feature {
     _verify(data) {
         return data instanceof Object;
     }
+
+    /*
+    this._switches[group][name] = switch;
+    ex. this._switches.livingroom.toggle = GroupToggleSwitch()
+     */
 
     _setup(data) {
         this._switches = {};
@@ -117,6 +126,14 @@ class Lightswitches extends Feature {
         };
         return super.register(socket, event, _callback);
     }
+
+    update() {
+        tools.forEach(this._switches, (groups, group) => {
+            tools.forEach(groups, (_switch, name) => {
+                _switch.exec('request')();
+            });
+        });
+    }
 }
 
 class Thermometer extends Feature {
@@ -148,6 +165,10 @@ class Thermometer extends Feature {
             }
         };
         return super.register(socket, event, _callback);
+    }
+
+    update() {
+        socket.emit('updateThermostat', this._thermostat.readings);
     }
 }
 
@@ -182,8 +203,17 @@ function broadcast(event, data) {
 }
 
 io.on('connection', (socket) => {
+    // TODO: keep track of client connections for better logging
     console.log('Client connected!');
     socket.emit('features', getFeatureList());
+
+    socket.on('requestAll', (data) => {
+        console.log('Performing full feature data refresh');
+        tools.forEach(features, (feature, name) => {
+            console.log('Refreshing data for '+name);
+            feature.update();
+        });
+    });
 
     /* Thermostat */
     features.thermostat.register(socket, 'thermostat');

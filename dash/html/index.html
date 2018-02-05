@@ -354,18 +354,11 @@
 
             socket.on('connect', () => {
                 console.log('socket.io READY');
-                socket.emit('thermostat');  // Request thermostat reading
             });
 
             socket.on('features', (data) => {
                 console.log(`Features: ${JSON.stringify(data)}`);
-                let names;
-                for (let i in names = Object.getOwnPropertyNames(data)) {
-                    let name = names[i];
-                    if (data[name]) {
-                        socket.emit(name, { action: 'request' });
-                    }
-                }
+                socket.emit('requestAll');
             });
 
             socket.on('updateLightswitch', (data) => {
