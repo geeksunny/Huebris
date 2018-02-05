@@ -145,7 +145,7 @@ app.use('/css/bulma.css', express.static(path.join(__dirname, '/node_modules/bul
 
 /* Features */
 const features = {
-    thermostat: new Thermometer(/*huebris.thermostat/*disabled*/),
+    thermostat: new Thermometer(huebris.thermostat),
     lightswitches: new Lightswitches(huebris.switches)
 };
 function getFeatureList() {

@@ -1,10 +1,17 @@
 const imu = require('nodeimu');
 const pi = require('node-raspi');
-const IMU = new imu.IMU();
+
+let IMU = null;
+try {
+    IMU = new imu.IMU();
+} catch (err) {
+    console.log("Thermostat hardware not found!");
+}
 
 
 class Thermostat {
     constructor() {
+        this._initialized = IMU !== null;
         this._inFarenheit = false;
         this._cpuTemperature = 0;
         this._ambientTemperature = 0;
@@ -21,6 +28,10 @@ class Thermostat {
 
     update() {
         return new Promise((resolve, reject) => {
+            if (!this.initialized) {
+                reject('Thermostat is not initialized!');
+                return;
+            }
             IMU.getValue((err, data) => {
                 if (err != null) {
                     reject(err);
@@ -46,6 +57,9 @@ class Thermostat {
     }
 
     start(immediate = true, timeout = null, callback = null, restart = false) {
+        if (!this.initialized) {
+             throw 'Thermostat is not initialized!';
+        }
         if (this._timeoutJob !== null) {
             if (restart) {
                 this.stop();
@@ -88,6 +102,10 @@ class Thermostat {
                 console.log(err);
             });
         };
+    }
+
+    get initialized() {
+        return this._initialized;
     }
 
     get temperature() {
