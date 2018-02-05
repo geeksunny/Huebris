@@ -12,8 +12,103 @@
             const ZOOM_LEVEL = .75; // Must match body's zoom CSS level
 
             const elems = {
-                thermostat: document.querySelector('#thermostat_value')
+                thermostat: document.querySelector('#thermostat_value'),
+                clock: {
+                    time: document.querySelector('#clock-time'),
+                    day: document.querySelector('#clock-day'),
+                    date: document.querySelector('#clock-date')
+                }
             };
+
+            class Clock {
+                constructor(seconds = false, militaryTime = false, callback = null) {
+                    this._time = null;
+                    this._day = null;
+                    this._date = null;
+
+                    this._timeOptions = {
+                        hour12: !militaryTime,
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    };
+                    this.seconds = seconds;
+
+                    this._dayOptions = {
+                        weekday: 'long'
+                    };
+                    this._dateOptions = {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric'
+                    };
+
+                    this._callback = null;
+                    if (callback) {
+                        this.callback = callback;
+                    }
+                    this._timeoutJob = null;
+                }
+
+                start(callback) {
+                    if (callback) {
+                        this.callback = callback;
+                    }
+                    if (this._callback === null) {
+                        throw "Clock callback required to start ticking.";
+                    }
+                    if (this._timeoutJob === null) {
+                        let timeout = (this._seconds) ? 1000 : 60000;
+                        this._timeoutJob = setInterval(this._onTick, timeout);
+                        this._onTick();
+                    }
+                }
+
+                stop() {
+                    if (this._timeoutJob !== null) {
+                        clearInterval(this._timeoutJob);
+                        this._timeoutJob = null;
+                    }
+                }
+
+                _onTick() {
+                    let now = new Date();
+                    this._time = now.toLocaleTimeString('en-US', this._timeOptions);
+                    let update = { time: this._time };
+
+                    // TODO: check if date needs updating
+                    this._day = now.toLocaleDateString('en-US', this._dayOptions);
+                    update.day = this._day;
+                    this._date = now.toLocaleDateString('en-US', this._dateOptions);
+                    update.date = this._date;
+
+                    this._callback(update);
+                }
+
+                get time() {
+                    return {
+                        time: this._time,
+                        day: this._day,
+                        date: this._date
+                    };
+                }
+
+                set callback(callback) {
+                    if (!(callback instanceof Function)) {
+                        throw "Callback must be a function";
+                    }
+                    this._callback = callback;
+                }
+
+                set seconds(showSeconds) {
+                    // TODO: Update any existing timeoutInterval
+                    this._seconds = showSeconds;
+                    if (showSeconds) {
+                        this._timeOptions.second = '2-digit';
+                    } else {
+                        delete this._timeOptions.second;
+                    }
+                }
+            }
 
             class TapManager {
                 constructor() {
@@ -132,6 +227,17 @@
                     }
                 }
             }
+
+            const clock = new Clock();
+            clock.start((time) => {
+                elems.clock.time.innerText = time.time;
+                if (time.day) {
+                    elems.clock.day.innerText = time.day;
+                }
+                if (time.date) {
+                    elems.clock.date.innerText = time.date;
+                }
+            });
 
             const socket = io();
             const tapMgr = new TapManager();
@@ -276,8 +382,12 @@
                 <div class="tile is-vertical">
                     <div class="tile is-parent">
                         <article class="tile is-child notification is-warning">
-                            <p class="title">3:30 PM</p>
-                            <p class="subtitle">Wednesday<br />Jan 31 2018</p>
+                            <p class="title" id="clock-time">3:30 PM</p>
+                            <p class="subtitle">
+                                <span id="clock-day">Wednesday</span>
+                                <br />
+                                <span id="clock-date">Jan 31 2018</span>
+                            </p>
                         </article>
                     </div>
                     <div class="tile is-parent">
