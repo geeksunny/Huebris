@@ -19,13 +19,16 @@ app.use('/css/bulma.css', express.static(path.join(__dirname, '/node_modules/bul
 
 /* Thermostat */
 // TODO: Build in feature for keeping history of readings
-if (huebris.thermostat) {
-    const Thermostat = require('./thermostat');
+// TODO: Create a cleaner way to handle potentially missing features.
+const Thermostat = (huebris.thermostat) ? require('./thermostat') : null;
+if (Thermostat) {
     Thermostat.farenheit = huebris.thermostat.farenheit;
     Thermostat.timeout = huebris.thermostat.timeout;
     Thermostat.callback = (readings) => {
+        console.log(`Broadcasting updated thermostat readings. ${JSON.stringify(readings)}`);
         broadcast("updateThermostat", readings);
     };
+    Thermostat.start();
 }
 
 

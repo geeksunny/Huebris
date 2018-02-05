@@ -45,7 +45,7 @@ class Thermostat {
         });
     }
 
-    start(timeout = null, callback = null, restart = false) {
+    start(immediate = true, timeout = null, callback = null, restart = false) {
         if (this._timeoutJob !== null) {
             if (restart) {
                 this.stop();
@@ -59,6 +59,9 @@ class Thermostat {
         if (callback != null) {
             this.callback = callback;
         }
+        if (immediate) {
+            this._exec()();
+        }
         this._timeoutJob = setInterval(this._exec(), this.timeout);
     }
 
@@ -70,13 +73,16 @@ class Thermostat {
     }
 
     _exec() {
-        this.update().then((readings) => {
-            // TODO: Revisit this to ensure promises work here.
-            this.callback(readings);
-        }).catch((err) => {
-            console.log("Error encountered while executing callback.");
-            console.log(err);
-        });
+        let parent = this;
+        return () => {
+            parent.update().then((readings) => {
+                // TODO: Revisit this to ensure promises work here.
+                parent.callback(readings);
+            }).catch((err) => {
+                console.log("Error encountered while executing callback.");
+                console.log(err);
+            });
+        };
     }
 
     get temperature() {
@@ -85,7 +91,7 @@ class Thermostat {
 
     get temperatureFormatted() {
         let label = (this._inFarenheit) ? "F" : "C";
-        return `${this.temperature} °${label}`;
+        return `${this.temperature.toFixed(1)} °${label}`;
     }
 
     get pressure() {
