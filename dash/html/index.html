@@ -135,43 +135,51 @@
             tapMgr.onTapAndHold = handleTapAndHold;
 
             function handleTap(button) {
-                let action = button.dataset.action;
-                let group = button.parentElement.dataset.group;
-                // console.log(`TAP :: Action: ${action} | Group: ${group}`);
-                switch (action) {
+                let options = {
+                    action: button.dataset.action,
+                    group: button.parentElement.dataset.group
+                };
+                switch (options.action) {
                     case 'toggle':
                     case 'presets':
-                        socket.emit(action, group);
+                        options.type = options.action;
                         break;
                     case 'up':
                     case 'down':
-                        socket.emit('dimmer', group, action);
+                        options.type = 'dimmer';
                         break;
                     default:
-                        break;
+                        return;
                 }
+                socket.emit('lightswitch', options);
             }
 
             function handleTapAndHold(button) {
-                let action = button.dataset.action;
-                let group = button.parentElement.dataset.group;
-                // console.log(`TAP AND HOLD :: Action: ${action} | Group: ${group}`);
-                switch (action) {
+                let options = {
+                    action: button.dataset.action,
+                    group: button.parentElement.dataset.group
+                };
+                switch (options.action) {
                     case 'up':
-                        socket.emit('dimmer', group, 'top');
+                        options.type = 'dimmer';
+                        options.action = 'top';
                         break;
                     case 'down':
-                        socket.emit('dimmer', group, 'bottom');
+                        options.type = 'dimmer';
+                        options.action = 'bottom';
                         break;
                     case 'toggle':
-                        socket.emit('toggle', group, 'reset');
+                        options.type = 'toggle';
+                        options.action = 'reset';
                         break;
                     case 'presets':
-                        socket.emit('presets', group, 'down');
+                        options.type = 'presets';
+                        options.action = 'down';
                         break;
                     default:
-                        break;
+                        return;
                 }
+                socket.emit('lightswitch', options);
             }
 
             let buttons = document.querySelectorAll('article.ui-btn .button');
@@ -277,7 +285,7 @@
                     </article>
                 </div>
                 <div class="tile is-parent">
-                    <article class="tile is-child notification is-primary ui-btn" data-group="6">
+                    <article class="tile is-child notification is-primary ui-btn" data-group="livingroom"">
                         <p class="button icon is-large is-primary" data-action="up">
                             <i class="fas fa-3x fa-chevron-up"></i>
                         </p>
@@ -291,7 +299,7 @@
                     </article>
                 </div>
                 <div class="tile is-parent">
-                    <article class="tile is-child notification is-primary ui-btn" data-group="6">
+                    <article class="tile is-child notification is-primary ui-btn" data-group="livingroom"">
                         <p class="button is-large is-primary title icon" data-action="presets">
                             <i class="fas fa-3x fa-adjust"></i>
                             PRESETS
@@ -308,7 +316,7 @@
                     </article>
                 </div>
                 <div class="tile is-parent">
-                    <article class="tile is-child notification is-primary ui-btn" data-group="2">
+                    <article class="tile is-child notification is-primary ui-btn" data-group="bedroom">
                         <p class="button icon is-large is-primary" data-action="up">
                             <i class="fas fa-3x fa-chevron-up"></i>
                         </p>
@@ -322,7 +330,7 @@
                     </article>
                 </div>
                 <div class="tile is-parent">
-                    <article class="tile is-child notification is-primary ui-btn" data-group="2">
+                    <article class="tile is-child notification is-primary ui-btn" data-group="bedroom">
                         <p class="button is-large is-primary title icon" data-action="presets">
                             <i class="fas fa-3x fa-adjust"></i>
                             PRESETS
