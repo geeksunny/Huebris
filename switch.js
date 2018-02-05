@@ -249,6 +249,15 @@ class SceneCycler extends Cycler {
     initializer(options) {
         options.property = 'scene';
         options.repeats = true;
+        if (!(options.items instanceof Array)) {
+            options.names = [];
+            let items = [];
+            for (let name in options.items) {
+                options.names.push(name);
+                items.push(options.items[name]);
+            }
+            options.items = items;
+        }
         super.initializer(options);
     }
 
