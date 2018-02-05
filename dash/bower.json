@@ -1,0 +1,21 @@
+{
+  "name": "dash",
+  "description": "Homegrown homebound home controls.",
+  "main": "",
+  "authors": [
+    "Justin Swanson <geeksunny@gmail.com>"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/geeksunny/Huebris",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "weather-icons": "^2.0.10"
+  }
+}
