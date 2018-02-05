@@ -43,7 +43,18 @@ class Switch {
                 let api = parent.getApi(parent.hueClient);
                 api.getById(item).then(item => {
                     console.log('Performing action -- argument: '+argument);
-                    let changed = (argument === 'reset') ? parent.reset(item) : parent.performAction(item, argument);
+                    let changed;
+                    switch (argument) {
+                        case 'reset':
+                            changed = parent.reset(item);
+                            break;
+                        case 'request':
+                            changed = false;
+                            break;
+                        default:
+                            changed = parent.performAction(item, argument);
+                    }
+
                     item.changed = changed;
                     return (changed) ? api.save(item) : item;
                 }).then(item => {
@@ -214,6 +225,7 @@ class Dimmer extends Cycler {
             level -= this.dimmerStep;
         }
         // TODO: Need to determine existing brightness level to know which index to start at ('nice to have') Probably use a promise to poll the hueClient before calling super
+        // TODO: call this.exec() with action='request' after initialization to get initial brightness setting
 
         options.property = 'brightness';
         super.initializer(options);

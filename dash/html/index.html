@@ -11,14 +11,42 @@
         document.addEventListener('DOMContentLoaded', () => {
             const ZOOM_LEVEL = .75; // Must match body's zoom CSS level
 
-            const elems = {
-                thermostat: document.querySelector('#thermostat_value'),
-                clock: {
-                    time: document.querySelector('#clock-time'),
-                    day: document.querySelector('#clock-day'),
-                    date: document.querySelector('#clock-date')
-                }
-            };
+            const elems = {};
+            let tileNodes = document.querySelectorAll(
+                '#clock-tile, #thermostat-tile, #system-tile, #weather-tile, #livingroom-tile, #bedroom-tile');
+            if (tileNodes) {
+                tileNodes.forEach((node, index, list) => {
+                    switch (node.id) {
+                        case 'clock-tile':
+                            elems.clock = {
+                                time: node.querySelector('#clock-time'),
+                                day: node.querySelector('#clock-day'),
+                                date: node.querySelector('#clock-date')
+                            };
+                            break;
+                        case 'thermostat-tile':
+                            elems.thermostat = node.querySelector('#thermostat_value');
+                            break;
+                        case 'livingroom-tile':
+                        case 'bedroom-tile':
+                            let name = node.id.replace('-tile', '');
+                            elems[name] = { title: node.querySelector(`${name}-title`) };
+                            let buttons = node.querySelectorAll(`[data-group=${name}] p`);
+                            buttons.forEach((switchNode, switchIndex, switchList) => {
+                                let action = switchNode.dataset.action;
+                                elems[name][action] = { label: switchNode.querySelector('span') };
+                                let icon = switchNode.querySelector('i, svg');
+                                if (icon) {
+                                    elems[name][action].iconParent = icon.parentNode;
+                                }
+                            });
+                            break;
+                        case 'system-tile':
+                        case 'weather-tile':
+                            //
+                    }
+                });
+            }
 
             class Clock {
                 constructor(seconds = false, militaryTime = false, callback = null) {
@@ -294,8 +322,31 @@
                 socket.emit('lightswitch', options);
             }
 
+            function updateLightswitch(data) {
+                let {group, name, argument, item} = data;
+                if (item.changed || argument === 'request') {
+                    let elem = elems[group][name];
+                    // TODO: cycle through all buttins in group for update? PRESETS doesn't update an OFF switch.
+                    switch (name) {
+                        case 'toggle':
+                            // TODO: This is causing UI bugs on the RasPi hardware
+                            let icon = elem.iconParent.querySelector('svg');
+                            // let { any_on, all_on } = item.state.attributes;
+                            // TODO: Add a half-overlay of lightbulb when (any_on && !all_on)
+                            // TODO~: It looks like these values are not the updated values. Should switch.js request up-to-date information right away?
+                            let on = item.action.attributes.on;
+                            icon.dataset.prefix = on ? 'fas' : 'far';
+                            elem.label.innerText = on ? 'ON' : 'OFF';
+                            break;
+                        case 'dimmer':
+                        case 'presets':
+                        default:
+                            break;
+                    }
+                }
+            }
+
             let buttons = document.querySelectorAll('article.ui-btn .button');
-            console.log(JSON.stringify(buttons));
             for (let i = 0; i < buttons.length; i++) {
                 let button = buttons[i];
                 tapMgr.register(button);
@@ -308,23 +359,17 @@
 
             socket.on('features', (data) => {
                 console.log(`Features: ${JSON.stringify(data)}`);
-                // TODO: Configure UI based on enabled features
+                let names;
+                for (let i in names = Object.getOwnPropertyNames(data)) {
+                    let name = names[i];
+                    if (data[name]) {
+                        socket.emit(name, { action: 'request' });
+                    }
+                }
             });
 
             socket.on('updateLightswitch', (data) => {
-                let {group, name, item} = data;
-                if (item.changed) {
-                    switch (name) {
-                        case 'toggle':
-                            // TODO: Update icon of toggle switch based on item.on
-                            break;
-                        case 'dimmer':
-                        case 'presets':
-                        default:
-                            break;
-                    }
-                }
-                console.log(`updateLightswitch :: ${JSON.stringify(data, null, 2)}`);
+                updateLightswitch(data);
             });
 
             socket.on('updateThermostat', (data) => {
@@ -382,7 +427,7 @@
         <div class="tile is-vertical is-6">
             <div class="tile">
                 <div class="tile is-vertical">
-                    <div class="tile is-parent">
+                    <div class="tile is-parent" id="clock-tile">
                         <article class="tile is-child notification is-warning">
                             <p class="title" id="clock-time">3:30 PM</p>
                             <p class="subtitle">
@@ -392,7 +437,7 @@
                             </p>
                         </article>
                     </div>
-                    <div class="tile is-parent">
+                    <div class="tile is-parent" id="thermostat-tile">
                         <article class="tile is-child notification is-warning">
                             <p class="subtitle">Inside</p>
                             <p class="title" id="thermostat_value">--</p>
@@ -400,14 +445,14 @@
                         </article>
                     </div>
                 </div>
-                <div class="tile is-parent">
+                <div class="tile is-parent" id="system-tile">
                     <article class="tile is-child notification is-info">
                         <p class="title">System Panel</p>
                         <p class="subtitle">System stats, button for system settings</p>
                     </article>
                 </div>
             </div>
-            <div class="tile is-parent">
+            <div class="tile is-parent" id="weather-tile">
                 <article class="tile is-child notification is-danger">
                     <p class="title">Weather Forecast</p>
                     <p class="subtitle">Now / Today / Tomorrow ( / Next?)</p>
@@ -418,20 +463,20 @@
             </div>
         </div>
         <div class="tile is-vertical is-3">
-            <div class="tile is-child">
+            <div class="tile is-child" id="livingroom-tile">
                 <div class="tile is-parent">
                     <article class="tile is-child notification is-primary ui-label">
-                        <div class="title is-4">Living Room</div>
+                        <div class="title is-4" id="livingroom-title">Living Room</div>
                     </article>
                 </div>
                 <div class="tile is-parent">
-                    <article class="tile is-child notification is-primary ui-btn" data-group="livingroom"">
+                    <article class="tile is-child notification is-primary ui-btn" data-group="livingroom">
                         <p class="button icon is-large is-primary" data-action="up">
                             <i class="fas fa-3x fa-chevron-up"></i>
                         </p>
                         <p class="button is-large is-primary title icon" data-action="toggle">
-                            <i class="fas fa-3x fa-lightbulb"></i>
-                            ON
+                            <i class="far fa-3x fa-lightbulb"></i>
+                            <span>OFF</span>
                         </p>
                         <p class="button is-large is-primary" data-action="down">
                             <i class="fas fa-3x fa-chevron-down"></i>
@@ -439,20 +484,20 @@
                     </article>
                 </div>
                 <div class="tile is-parent">
-                    <article class="tile is-child notification is-primary ui-btn" data-group="livingroom"">
+                    <article class="tile is-child notification is-primary ui-btn" data-group="livingroom">
                         <p class="button is-large is-primary title icon" data-action="presets">
                             <i class="fas fa-3x fa-adjust"></i>
-                            PRESETS
+                            <span>PRESETS</span>
                         </p>
                     </article>
                 </div>
             </div>
         </div>
         <div class="tile is-vertical is-3">
-            <div class="tile is-child">
+            <div class="tile is-child" id="bedroom-tile">
                 <div class="tile is-parent">
                     <article class="tile is-child notification is-primary ui-label">
-                        <div class="title is-4">Bedroom</div>
+                        <div class="title is-4" id="bedroom-title">Bedroom</div>
                     </article>
                 </div>
                 <div class="tile is-parent">
@@ -462,7 +507,7 @@
                         </p>
                         <p class="button is-large is-primary title icon" data-action="toggle">
                             <i class="far fa-3x fa-lightbulb"></i>
-                            OFF
+                            <span>OFF</span>
                         </p>
                         <p class="button is-large is-primary" data-action="down">
                             <i class="fas fa-3x fa-chevron-down"></i>
@@ -473,7 +518,7 @@
                     <article class="tile is-child notification is-primary ui-btn" data-group="bedroom">
                         <p class="button is-large is-primary title icon" data-action="presets">
                             <i class="fas fa-3x fa-adjust"></i>
-                            PRESETS
+                            <span>PRESETS</span>
                         </p>
                     </article>
                 </div>

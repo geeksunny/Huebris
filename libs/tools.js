@@ -27,6 +27,20 @@ module.exports = {
             max = [min, min = max][0];
         }
         return value >= min && value <= max;
+    },
+
+    forEach(data, callback) {
+        if (data instanceof Array) {
+            data.forEach(callback);
+        } else {
+            // TODO: implement `thisArg`, Optional third argument
+            //  Value to use as this (i.e the reference Object) when executing callback.
+            let keys;
+            for (let i in keys = Object.getOwnPropertyNames(data)) {
+                let key = keys[i];
+                callback(data[key], key, data);
+            }
+        }
     }
 
 };

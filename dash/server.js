@@ -3,6 +3,7 @@ const express = require('express');
 const app = express();
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
+const tools = require('../libs/tools');
 const Switches = require('../switch');
 
 const huejay = require('huejay');
@@ -78,9 +79,10 @@ class Lightswitches extends Feature {
                 try {
                     let {type, options} = groupSwitch;
                     options.client = hueClient;
-                    options.callback = (item) => {
-                        console.log(`CALLBACK CALLED FOR (${group}, ${options.name})`);
-                        broadcast('updateLightswitch', {group: group, name: options.name, item: item});
+                    options.callback = (item, argument) => {
+                        console.log(`CALLBACK CALLED FOR (${group}, ${options.name}, ${argument})`);
+                        broadcast('updateLightswitch',
+                            { group: group, name: options.name, argument: argument, item: item });
                     };
                     this._switches[group][options.name] = new Switches[type](options);
                 } catch (err) {
@@ -95,11 +97,20 @@ class Lightswitches extends Feature {
     register(socket, event, callback) {
         let parent = this;
         let _callback = (data) => {
-            console.log(this._switches);
             let {type, group, action} = data;
             console.log(`Lightswitch invoked. TYPE: ${type} | GROUP: ${group} | ACTION: ${action}`);
-            let _switch = parent._switches[group][type];
-            _switch.exec(action)();
+
+            if (action === 'request') {
+                let targets = (typeof group === 'undefined') ? Object.getOwnPropertyNames(parent._switches) : [ group ];
+                targets.forEach((_group, _groupIndex, _groupList) => {
+                    tools.forEach(parent._switches[_group], (_switch, _switchKey, _switchList) => {
+                        _switch.exec(action)();
+                    });
+                });
+            } else {
+                let _switch = parent._switches[group][type];
+                _switch.exec(action)();
+            }
             if (callback) {
                 callback(data);
             }
@@ -150,7 +161,7 @@ app.use('/css/bulma.css', express.static(path.join(__dirname, '/node_modules/bul
 /* Features */
 const features = {
     thermostat: new Thermometer(huebris.thermostat),
-    lightswitches: new Lightswitches(huebris.switches)
+    lightswitch: new Lightswitches(huebris.switches)
 };
 function getFeatureList() {
     let list = {};
@@ -178,7 +189,7 @@ io.on('connection', (socket) => {
     features.thermostat.register(socket, 'thermostat');
 
     /* Lightswitches */
-    features.lightswitches.register(socket, 'lightswitch');
+    features.lightswitch.register(socket, 'lightswitch');
 });
 
 http.listen(3000, function() {
