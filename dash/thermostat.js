@@ -62,7 +62,12 @@ class Thermostat {
         if (immediate) {
             this._exec()();
         }
-        this._timeoutJob = setInterval(this._exec(), this.timeout);
+        try {
+            this._timeoutJob = setInterval(this._exec(), this.timeout);
+            return true;
+        } catch (err) {
+            return false;
+        }
     }
 
     stop() {

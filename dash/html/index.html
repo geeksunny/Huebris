@@ -193,16 +193,34 @@
                 tapMgr.register(button);
             }
 
-            socket.on('connect', (data) => {
+            socket.on('connect', () => {
                 console.log('socket.io READY');
                 socket.emit('thermostat');  // Request thermostat reading
             });
 
-            socket.on('finished', (data1, data2) => {
-                console.log('FINISHED- Action: '+data1+' | Group: '+data2);
+            socket.on('features', (data) => {
+                console.log(`Features: ${JSON.stringify(data)}`);
+                // TODO: Configure UI based on enabled features
+            });
+
+            socket.on('updateLightswitch', (data) => {
+                let {group, name, item} = data;
+                if (item.changed) {
+                    switch (name) {
+                        case 'toggle':
+                            // TODO: Update icon of toggle switch based on item.on
+                            break;
+                        case 'dimmer':
+                        case 'presets':
+                        default:
+                            break;
+                    }
+                }
+                console.log(`updateLightswitch :: ${JSON.stringify(data, null, 2)}`);
             });
 
             socket.on('updateThermostat', (data) => {
+                // TODO: data verification and console logging on update
                 elems.thermostat.innerText = data.temperatureFormatted;
             });
         });
