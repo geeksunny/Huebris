@@ -10,15 +10,43 @@ const huebris = require('../huebris');
 const hueClient = new huejay.Client(huebris.credentials);
 
 
+/* Client */
 app.use(express.static('html'));
 app.use('/css', express.static(path.join(__dirname, '/bower_components/weather-icons/css')));
 app.use('/font', express.static(path.join(__dirname, '/bower_components/weather-icons/font')));
 app.use('/css/bulma.css', express.static(path.join(__dirname, '/node_modules/bulma/css/bulma.css')));
 
 
+/* Thermostat */
+// TODO: Build in feature for keeping history of readings
+if (huebris.thermostat) {
+    const Thermostat = require('./thermostat');
+    Thermostat.farenheit = huebris.thermostat.farenheit;
+    Thermostat.timeout = huebris.thermostat.timeout;
+    Thermostat.callback = (readings) => {
+        broadcast("updateThermostat", readings);
+    };
+}
+
+
+/* Server */
+function broadcast(event, data) {
+    io.emit(event, data);
+}
+
 io.on('connection', (socket) => {
     console.log('connected');
 
+    //  TODO: An error should be returned when a non-enabled feature is requested. (socket.on('request', ...)? )
+
+    /* Thermostat */
+    if (huebris.thermostat) {
+        socket.on('thermostat', (data) => {
+            socket.emit('updateThermostat', Thermostat.readings);
+        });
+    }
+
+    /* Lightswitches */
     // TODO: Move this to a spot where it will run only once. Let the callback get socket passed in for immediate use.
     let switches = {};
     for (let group in huebris.switches) {

@@ -11,6 +11,10 @@
         document.addEventListener('DOMContentLoaded', () => {
             const ZOOM_LEVEL = .75; // Must match body's zoom CSS level
 
+            const elems = {
+                thermostat: document.querySelector('#thermometer_value');
+            }
+
             class TapManager {
                 constructor() {
                     // TODO: with only one `touching` does this limit to one button press at a time? is that desirable?
@@ -191,10 +195,15 @@
 
             socket.on('connect', (data) => {
                 console.log('socket.io READY');
+                socket.emit('thermostat');  // Request thermostat reading
             });
 
             socket.on('finished', (data1, data2) => {
                 console.log('FINISHED- Action: '+data1+' | Group: '+data2);
+            });
+
+            socket.on('updateThermostat', (data) => {
+                elems.thermostat.innerText = data.temperatureFormatted;
             });
         });
     </script>
@@ -256,7 +265,8 @@
                     <div class="tile is-parent">
                         <article class="tile is-child notification is-warning">
                             <p class="subtitle">Inside</p>
-                            <p class="title">64&deg;</p>
+                            <p class="title" id="thermostat_value">--</p>
+                            <p class="subtitle">(Inside case, currently unvented)</p>
                         </article>
                     </div>
                 </div>
