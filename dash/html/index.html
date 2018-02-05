@@ -58,8 +58,8 @@
                     }
                     if (this._timeoutJob === null) {
                         let timeout = (this._seconds) ? 1000 : 60000;
-                        this._timeoutJob = setInterval(this._onTick, timeout);
-                        this._onTick();
+                        this._timeoutJob = setInterval(Clock._onTick(this), timeout);
+                        Clock._onTick(this)();
                     }
                 }
 
@@ -70,18 +70,20 @@
                     }
                 }
 
-                _onTick() {
-                    let now = new Date();
-                    this._time = now.toLocaleTimeString('en-US', this._timeOptions);
-                    let update = { time: this._time };
+                static _onTick(parent) {
+                    return () => {
+                        let now = new Date();
+                        parent._time = now.toLocaleTimeString('en-US', parent._timeOptions);
+                        let update = { time: parent._time };
 
-                    // TODO: check if date needs updating
-                    this._day = now.toLocaleDateString('en-US', this._dayOptions);
-                    update.day = this._day;
-                    this._date = now.toLocaleDateString('en-US', this._dateOptions);
-                    update.date = this._date;
+                        // TODO: check if date needs updating
+                        parent._day = now.toLocaleDateString('en-US', parent._dayOptions);
+                        update.day = parent._day;
+                        parent._date = now.toLocaleDateString('en-US', parent._dateOptions);
+                        update.date = parent._date;
 
-                    this._callback(update);
+                        parent._callback(update);
+                    };
                 }
 
                 get time() {

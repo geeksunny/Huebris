@@ -122,7 +122,11 @@ class Thermometer extends Feature {
             console.log(`Broadcasting updated thermostat readings. ${JSON.stringify(readings)}`);
             broadcast("updateThermostat", readings);
         };
-        return this._thermostat.start();
+        try {
+            return this._thermostat.start();
+        } catch (err) {
+            return false;
+        }
     }
 
     register(socket, event, callback) {
