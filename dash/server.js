@@ -135,6 +135,18 @@ class Lightswitches extends Feature {
         return super.register(socket, event, _callback);
     }
 
+    unregister(mac) {
+        // TODO: Rewrite this when dash button switches share a mac address index instead of iterating until success
+        for (let i in this._switches.dashButtons) {
+            let button = this._switches.dashButtons[i];
+            let result = button.unregisterButton(mac);
+            if (result) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     update(socket) {
         tools.forEach(this._switches, (groups, group) => {
             tools.forEach(groups, (_switch, name) => {

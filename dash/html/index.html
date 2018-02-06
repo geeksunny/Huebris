@@ -355,6 +355,9 @@
             function updateLightswitch(data) {
                 let {group, name, argument, item} = data;
                 if (item.changed || argument === 'request') {
+                    if (!elems.hasOwnProperty(group) || !elems[group].hasOwnProperty(name)) {
+                        return;
+                    }
                     let elem = elems[group][name];
                     // TODO: cycle through all buttins in group for update? PRESETS doesn't update an OFF switch.
                     switch (name) {

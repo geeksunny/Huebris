@@ -10,6 +10,43 @@ module.exports = {
         }
     },
 
+    removeIndex(index, array) {
+        let item = array[index];
+        array.splice(index, 1);
+        return item;
+    },
+
+    removeIndexes(indexes, array) {
+        indexes.sort();
+        let results = [];
+        for (let i in indexes) {
+            results.push(this.removeIndex(index - i, array));
+        }
+        return results;
+    },
+
+    findAndRemove(array, finder, multiple = false) {
+        let indexes = [];
+        for (let i in array) {
+            let item = array[i];
+            console.log(`Item: ${item}`);
+            console.log(`Item mac: ${item.mac}`);
+            if (finder(item)) {
+                if (multiple) {
+                    indexes.push(i);
+                } else {
+                    return this.removeIndex(i, array);
+                }
+            }
+        }
+        return (indexes.length) ? this.removeIndexes(indexes, array) : null;
+    },
+
+    removeFromArray(value, array) {
+        let i = array.indexOf(value);
+        return (i !== -1) ? this.removeIndex(i, array) : null;
+    },
+
     median(values) {
         values.sort((a, b) => {
             return a - b;

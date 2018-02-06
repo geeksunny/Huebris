@@ -1,5 +1,5 @@
 const aggregation = require('aggregation/es6');
-const Btn = require('./libs/btn').Btn;
+const Btn = require('./libs/btn').Button;
 const tools = require('./libs/tools');
 
 
@@ -86,8 +86,53 @@ class Switch {
 
 class DashButtonSwitch extends Switch {
     constructor(options) {
+        // todo: ((options.mac[=mac1] OR options.macs[=[mac1, mac2]]) [AND options.action]) OR options.actions[={mac1:action1, mac2:action2}]
+        // TODO: Probably would want to be able to name each mac address individually, so the above logic might not be enough
         super(options);
-        this.button = new Btn(options.name, options.mac, this.exec(), true);
+        this.buttons = { _index: [] };
+        if (options.buttons) {
+            for (let i = 0; i < options.buttons.length; i++) {
+                let {name, mac, action} = options.buttons[i];
+                this.registerButton(name, mac, action);
+            }
+        }
+    }
+
+    registerButton(name, mac, action) {
+        if (this.buttons._index.indexOf(mac) > -1) {
+            throw 'This mac is already registered!';
+        }
+        // TODO: enforce one mac address per switch? Would need a reverse-index of [action][mac]...
+        action = (action) ? action : '*';
+        let button = new Btn(name, mac, this.exec(), true);
+        this.buttons._index.push(mac);
+        if (!this.buttons.hasOwnProperty(action)) {
+            this.buttons[action] = [];
+        }
+        this.buttons[action].push(button);
+    }
+
+    /**
+     *
+     * @param mac
+     * @param action
+     * @returns {boolean} True if a button was disabled.
+     */
+    unregisterButton(mac, action = '*') {
+        if (!this.buttons.hasOwnProperty(action)) {
+            return false;
+        }
+        let buttons = this.buttons[action];
+        // TODO: try/catch here?
+        let button = tools.findAndRemove(buttons, (item) => {
+            return item.mac === mac;
+        });
+        if (button) {
+            button.stop();
+            tools.removeFromArray(mac, this.buttons._index);
+            return true;
+        }
+        return false;
     }
 }
 

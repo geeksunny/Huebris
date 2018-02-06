@@ -8,84 +8,103 @@ const config = {
     }
 };
 
-// TODO: Add debounce time, throttling/cooldown periods, multi-press patterns
-const Btn = function(name, mac, callback = null, startListening = false) {
-    if (tools.isEmpty(mac)) {
-        throw new Error('MAC address required!');
-    }
-    this.mac = mac;
-    this.name = (!tools.isEmpty(name))
-        ? name
-        : 'btn-' + mac.replace(':', '');
-    this.dashButton = new DashButton(this.mac);
 
-    if (typeof callback === 'function') {
-        this.callback = callback;
-    } else {
+class Button {
+    constructor(name, mac, callback = null, startListening = false) {
+        if (tools.isEmpty(mac)) {
+            throw 'MAC address required!';
+        }
+        this._mac = mac;
+        this._name = (!tools.isEmpty(name)) ? name : `btn-${mac.replace(':', '')}`;
+        this._dashButton = new DashButton(this._mac);
+
+        // TODO: add support for promises
+        if (callback instanceof Function) {
+            this._callback = callback;
+        } else {
+            const parent = this;
+            this._callback = () => {
+                console.log(`Click detected from ${parent.name}`);
+            };
+        }
+
+        // TODO: readdress debounce, test shorter values
+        // With the blinking red light response, the button takes about 7.5s to become ready again after press.
+        this._debounce = 7500;
+        this._lastClick = 0;
+
+        this._subscription = null;
+        if (startListening) {
+            this.listen();
+        }
+    }
+
+    get mac() {
+        return this._mac;
+    }
+
+    get name() {
+        return this._name;
+    }
+
+    // todo: getter and/or setter for callbacks?
+
+    listen(callback) {
+        if (callback instanceof Function) {
+            this._callback = callback;
+        }
+        this._subscription = this._dashButton.addListener(this._onClick());
+        console.log(`Listening for ${this._name}`);
+    }
+
+    stop() {
+        if (this._subscription !== null) {
+            this._subscription.remove();
+        }
+    }
+
+    _onClick() {
+        // todo: readdress debounce code, clean up
         const parent = this;
-        this.callback = function() {
-            console.log('Click detected from "'+parent.name+'".');
+        return () => {
+            let now = Date.now();
+            console.log(``);    // TODO!!!!!!!!!!!!!!!!!!!
+            if (now <= (parent._lastClick + parent._debounce)) {
+                console.log('BOUNCE REJECTED!');
+                return;
+            }
+            parent._lastClick = now;
+            parent._callback();
         };
     }
+}
 
-    // this.debounce = config.buttons.debounce;
-    this.debounce = 10000;
-    this.lastClick = 0;
 
-    this.subscription = null;
-    if (startListening) {
-        this.listen();
+class ButtonConfig {
+    // TODO: Class that defines configuration for Buttons? Is this necessary?
+    constructor() {
+        // name, mac?, ???
     }
-};
+}
 
-Btn.prototype.listen = function(callback) {
-    if (typeof callback === 'function') {
-        this.callback = callback;
+
+class ClickPattern {
+    // TODO: Class that defines sequence and timing of button presses to perform specific actions
+    constructor() {
+        //
     }
-    this.subscription = this.dashButton.addListener(this.onClick());
-    console.log("Listening for "+this.name+".");
-};
-
-Btn.prototype.stop = function() {
-    if (this.subscription !== null) {
-        this.subscription.unsubscribe();
-    }
-};
-
-Btn.prototype.onClick = function() {
-    // todo: debounce logic
-    const parent = this;
-    return function() {
-        let now = Date.now();
-        console.log(now+' :: BUTTON CLICK DETECTED - Checking against '+(parent.lastClick + parent.debounce));
-        if (now <= (parent.lastClick + parent.debounce)) {
-            console.log('BOUNCE REJECTED!');
-            return;
-        }
-        parent.lastClick = now;
-
-        parent.callback();
-    };
-};
+}
 
 
-const BtnConfig = function() {
-    this.name = null;
-    this.mac = null;
-};
-
-
-const ClickPattern = function() {
-    //
-};
-
-
-const BtnGroup = function() {
+class ButtonGroup {
     // TODO: Class to handle distributing configuration settings to multiple Btns
-};
+    constructor() {
+        //
+    }
+}
 
 
 module.exports = {
-    Btn: Btn,
-    BtnGroup: BtnGroup
+    Button: Button,
+    //BtnGroup: BtnGroup
 };
