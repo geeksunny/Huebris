@@ -39,7 +39,7 @@ class Feature {
         }
     }
 
-    update() {
+    update(socket) {
         // TODO: document override purpose
     }
 
@@ -127,7 +127,7 @@ class Lightswitches extends Feature {
         return super.register(socket, event, _callback);
     }
 
-    update() {
+    update(socket) {
         tools.forEach(this._switches, (groups, group) => {
             tools.forEach(groups, (_switch, name) => {
                 _switch.exec('request')();
@@ -167,7 +167,7 @@ class Thermometer extends Feature {
         return super.register(socket, event, _callback);
     }
 
-    update() {
+    update(socket) {
         socket.emit('updateThermostat', this._thermostat.readings);
     }
 }
@@ -198,20 +198,37 @@ function getFeatureList() {
 
 
 /* Server */
+const CLIENTS = {}; // { `UUID`: `clientIP` }'
+
 function broadcast(event, data) {
     io.emit(event, data);
 }
 
+function newUuid() {
+    return require('uuid/v4')();
+}
+
 io.on('connection', (socket) => {
-    // TODO: keep track of client connections for better logging
-    console.log('Client connected!');
+    // TODO: Add log functions/class to manage client activity logs
+    console.log(`Client connected! IP: ${socket.handshake.address}`);
+
+    socket.on('uuid', (uuid, ack) => {
+        if (tools.isEmpty(uuid)) {
+            console.log(`Creating new UUID!`);
+            uuid = newUuid();
+            ack(uuid);
+        }
+        CLIENTS[uuid] = socket.handshake.address;
+        console.log(`UUID ${uuid} registered with ${JSON.stringify(CLIENTS[uuid])}`);
+    });
+
     socket.emit('features', getFeatureList());
 
     socket.on('requestAll', (data) => {
         console.log('Performing full feature data refresh');
         tools.forEach(features, (feature, name) => {
             console.log('Refreshing data for '+name);
-            feature.update();
+            feature.update(socket, true);
         });
     });
 
@@ -222,6 +239,9 @@ io.on('connection', (socket) => {
     features.lightswitch.register(socket, 'lightswitch');
 });
 
-http.listen(3000, function() {
+http.listen({
+    host: 'localhost',
+    port: 3000
+}, function() {
     console.log('listening on *:3000');
 });

@@ -48,6 +48,23 @@
                 });
             }
 
+            /**
+             * Store and retrieve a UUID value.
+             */
+            class Uuid {
+                static get _KEY() {
+                    return '_UUID';
+                }
+
+                static get uuid() {
+                    return localStorage.getItem(Uuid._KEY);
+                }
+
+                static set uuid(uuid) {
+                    localStorage.setItem(Uuid._KEY, uuid);
+                }
+            }
+
             class Clock {
                 constructor(seconds = false, militaryTime = false, callback = null) {
                     this._time = null;
@@ -353,7 +370,12 @@
             }
 
             socket.on('connect', () => {
-                console.log('socket.io READY');
+                let uuid = Uuid.uuid;
+                console.log(`socket.io READY! UUID: ${uuid}`);
+                socket.emit('uuid', uuid, (newUuid) => {
+                    console.log(`New UUID received: ${newUuid}`);
+                    Uuid.uuid = newUuid;
+                });
             });
 
             socket.on('features', (data) => {
