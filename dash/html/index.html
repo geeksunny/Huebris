@@ -103,7 +103,20 @@
                     }
                     if (this._timeoutJob === null) {
                         let timeout = (this._seconds) ? 1000 : 60000;
-                        this._timeoutJob = setInterval(Clock._onTick(this), timeout);
+
+                        // Begin the interval on the next second/minute
+                        let timeToFirstTimeout = timeout - (Date.now() % timeout);
+                        if (timeToFirstTimeout) {
+                            let parent = this;
+                            setTimeout(() => {
+                                parent._timeoutJob = setInterval(Clock._onTick(parent), timeout);
+                                Clock._onTick(parent)();
+                            }, timeToFirstTimeout);
+                        } else {
+                            this._timeoutJob = setInterval(Clock._onTick(this), timeout);
+                        }
+
+                        // Execute the initial tick;
                         Clock._onTick(this)();
                     }
                 }
