@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "dependencies": {
     "bulma": "^0.6.2",
+    "command-line-args": "^5.0.1",
     "express": "^4.16.2",
     "node-raspi": "^1.0.1",
     "nodeimu": "file:nodeimu",

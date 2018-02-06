@@ -11,6 +11,14 @@ const huebris = require('../huebris');
 const hueClient = new huejay.Client(huebris.credentials);
 
 
+/* Command line arguments */
+const optionDefinitions = [
+    { name: 'hostnames', type: String, multiple: true, defaultOption: true, defaultValue: '' }
+];
+const options = require('command-line-args')(optionDefinitions);
+console.log(options);
+
+
 /* Feature Classes */
 class Feature {
     /**
@@ -239,9 +247,11 @@ io.on('connection', (socket) => {
     features.lightswitch.register(socket, 'lightswitch');
 });
 
-http.listen({
-    host: 'localhost',
-    port: 3000
-}, function() {
-    console.log('listening on *:3000');
-});
+options.hostnames.forEach(((hostname) => {
+    http.listen({
+        host: hostname,
+        port: 3000
+    }, () => {
+        console.log(`Server listening on ${hostname}:3000`);
+    })
+}));
