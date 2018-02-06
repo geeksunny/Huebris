@@ -104,7 +104,7 @@ class DashButtonSwitch extends Switch {
         }
         // TODO: enforce one mac address per switch? Would need a reverse-index of [action][mac]...
         action = (action) ? action : '*';
-        let button = new Btn(name, mac, this.exec(), true);
+        let button = new Btn(name, mac, this.exec(action), true);
         this.buttons._index.push(mac);
         if (!this.buttons.hasOwnProperty(action)) {
             this.buttons[action] = [];
