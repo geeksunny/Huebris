@@ -86,23 +86,38 @@ class Switch {
 
 class DashButtonSwitch extends Switch {
     constructor(options) {
-        // todo: ((options.mac[=mac1] OR options.macs[=[mac1, mac2]]) [AND options.action]) OR options.actions[={mac1:action1, mac2:action2}]
-        // TODO: Probably would want to be able to name each mac address individually, so the above logic might not be enough
         super(options);
         this.buttons = { _index: [] };
-        if (options.buttons) {
-            for (let i = 0; i < options.buttons.length; i++) {
-                let {name, mac, action} = options.buttons[i];
-                this.registerButton(name, mac, action);
+        if (!tools.hasValue(options.buttons)) {
+            options.buttons = [];
+            if (tools.hasValue(options.macs)) {
+                // TODO: combine with 'actions' OR all macs trigger '*'
+                let actions = (options.hasOwnProperty('actions')) ? options.actions : {};
+                if (!tools.hasValue(actions.all) && tools.hasValue(options.action)) {
+                    actions.all = options.action;
+                }
+                tools.forEach(options.macs, (mac, index) => {
+                    let button = {name: options.name, mac: mac};
+                    button.action = (tools.hasValue(actions[mac])) ? actions[mac] : actions.all;
+                    options.buttons.push(button);
+                });
+            } else if (tools.hasValue(options.mac)) {
+                options.buttons.push({name: options.name, mac: options.mac, action: options.action});
             }
         }
+        if (options.buttons) {
+            tools.forEach(options.buttons, (option, key) => {
+                let {name, mac, action} = option;
+                this.registerButton(name, mac, action);
+            });
+        }
+        // TODO: Should a message be logged if no buttons were defined yet?
     }
 
     registerButton(name, mac, action) {
         if (this.buttons._index.indexOf(mac) > -1) {
             throw 'This mac is already registered!';
         }
-        // TODO: enforce one mac address per switch? Would need a reverse-index of [action][mac]...
         action = (action) ? action : '*';
         let button = new Btn(name, mac, this.exec(action), true);
         this.buttons._index.push(mac);

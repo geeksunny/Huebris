@@ -10,6 +10,10 @@ module.exports = {
         }
     },
 
+    hasValue(obj) {
+        return typeof obj !== 'undefined' && obj !== null;
+    },
+
     removeIndex(index, array) {
         let item = array[index];
         array.splice(index, 1);
