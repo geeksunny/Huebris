@@ -5,6 +5,7 @@ const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const tools = require('../libs/tools');
 const Switches = require('../switch');
+const WeatherApi = require('./weather');
 
 const huejay = require('huejay');
 const huebris = require('../huebris');
@@ -63,7 +64,7 @@ class Feature {
     /**
      * Feature setup method that executes if the feature is enabled.
      */
-    _setup() {}
+    _setup(data) {}
 
     get enabled() {
         return this._enabled;
@@ -192,6 +193,26 @@ class Thermometer extends Feature {
     }
 }
 
+class Weather extends Feature {
+    update(socket) {
+        // TODO: Add ability to force a refresh
+        this._weather.update().then((data) => {
+            socket.emit('updateWeather', data);
+        }).catch((err) => {
+            socket.emit('updateWeather', {error: err});
+        });
+    }
+
+    _verify(data) {
+        return data instanceof Object;
+    }
+
+    _setup(data) {
+        this._weather = new WeatherApi(data);
+    }
+}
+
+
 /* Client */
 app.use(express.static('html'));
 app.use('/css', express.static(path.join(__dirname, '/bower_components/weather-icons/css')));
@@ -202,7 +223,8 @@ app.use('/css/bulma.css', express.static(path.join(__dirname, '/node_modules/bul
 /* Features */
 const features = {
     thermostat: new Thermometer(huebris.thermostat),
-    lightswitch: new Lightswitches(huebris.switches)
+    lightswitch: new Lightswitches(huebris.switches),
+    weather: new Weather(huebris.weather)
 };
 function getFeatureList() {
     let list = {};
