@@ -11,6 +11,11 @@
         document.addEventListener('DOMContentLoaded', () => {
             const ZOOM_LEVEL = .75; // Must match body's zoom CSS level
 
+            // Trigger initial weather icon size adjustment
+            setTimeout(() => {
+                window.dispatchEvent(new Event('resize'));
+            }, 100);
+
             const elems = {};
             let tileNodes = document.querySelectorAll(
                 '#clock-tile, #thermostat-tile, #system-tile, #weather-tile, #livingroom-tile, #bedroom-tile');
@@ -35,14 +40,26 @@
                             buttons.forEach((switchNode, switchIndex, switchList) => {
                                 let action = switchNode.dataset.action;
                                 elems[name][action] = { label: switchNode.querySelector('span') };
+                                // TODO: Add a wrapper function for getting this SVG via get property?
                                 let icon = switchNode.querySelector('i, svg');
                                 if (icon) {
                                     elems[name][action].iconParent = icon.parentNode;
                                 }
                             });
                             break;
-                        case 'system-tile':
                         case 'weather-tile':
+                            let _elems = {};
+                            _elems.city = node.querySelector('#city');
+                            _elems.condition = node.querySelector('#condition');
+                            _elems.temperature = node.querySelector('#temperature');
+                            _elems.cloudiness = node.querySelector('#cloudiness');
+                            _elems.pressure = node.querySelector('#pressure');
+                            _elems.windIconParent = node.querySelector('#wind-parent');
+                            _elems.windIcon = node.querySelector('#wind-icon');
+                            _elems.windText = node.querySelector('#wind-text');
+                            elems['weather'] = _elems;
+                            break;
+                        case 'system-tile':
                             //
                     }
                 });
@@ -379,6 +396,36 @@
                 }
             }
 
+            function updateWeather(data) {
+                // TODO: Update UI with updated weather data
+                console.log(data);
+                let ui = elems['weather'];
+                ui.city.innerText = data._cityName;
+                // TODO: Handle multiple conditions
+                console.log(data._conditions);
+                ui.condition.innerText = data._conditions[0].main;
+                ui.temperature.innerText = data._temperature;
+                ui.cloudiness.innerText = data._cloudiness;
+                ui.pressure.innerText = data._pressure;
+                // TODO: Wind ICON
+                // console.log(ui.windIcon());
+                ui.windText.innerText = data._wind.speed;
+
+                /*
+                // TODO: Use this after Weather.js' Data class is shared with client in weather client feature class
+                ui.city.innerText = data.city;
+                // TODO: Handle multiple conditions
+                console.log(data.conditions);
+                ui.condition.innerText = data.conditions[0].main;
+                ui.temperature.innerText = data.temperatureString;
+                ui.cloudiness.innerText = data.cloudinessString;
+                ui.pressure.innerText = data.pressureString;
+                // TODO: Wind ICON
+                console.log(ui.windIcon());
+                ui.windText.innerText = data.windString;
+                 */
+            }
+
             let buttons = document.querySelectorAll('article.ui-btn .button');
             for (let i = 0; i < buttons.length; i++) {
                 let button = buttons[i];
@@ -406,6 +453,33 @@
             socket.on('updateThermostat', (data) => {
                 // TODO: data verification and console logging on update
                 elems.thermostat.innerText = data.temperatureFormatted;
+            });
+
+            socket.on('updateWeather', (data) => {
+                updateWeather(data);
+            });
+        });
+        // Auto-scaling weather icons
+        window.addEventListener('resize', (event) => {
+            // TODO: Move this + weather update code to its own file. Attach its own document.domload event for intial resize
+            console.log('resize!');
+            let icons = document.querySelectorAll('#weather-tile .wi');
+            icons = [icons[0]]; // TODO: ONLY WORKING ON BIGGEST ICON... work on others later
+            icons.forEach((node, index) => {
+                let row = node.parentNode.parentNode;
+                let height = row.clientHeight;
+
+                console.log(`height: ${height}`);
+                let newHeight = (height / 2) - 10;
+                node.style['font-size'] = `${newHeight}px`;
+                node.style['line-height'] = `${newHeight}px`;
+
+                let width = row.clientWidth;
+                let _icon = row.childNodes[1];
+                let _info = row.childNodes[3];
+                let newWidth = width - node.clientWidth;
+                console.log(row.childNodes);
+                row.childNodes[3].style['max-width'] = `${newWidth}px`;
             });
         });
     </script>
@@ -450,6 +524,43 @@
         article.ui-btn p:nth-child(2) svg {
             margin: 10px auto;
         }
+
+        #weather-tile .row {
+            width: 100%;
+            /*height: 50%;*/
+            height: 100%;
+        }
+
+        #weather-tile .item {
+            float: left;
+            height: inherit;
+        }
+
+        #weather-tile .wi {
+            width: auto;
+        }
+
+        #weather-tile .item.icon {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            width: auto;
+        }
+
+        #weather-tile .item.info-block {
+            width: auto;
+            height: auto;
+            margin-left: 6px;
+        }
+
+        #weather-tile .small {
+            font-size: 1.15em;
+        }
+
+        #weather-tile .big {
+            font-size: 2.25em;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -485,11 +596,43 @@
             </div>
             <div class="tile is-parent" id="weather-tile">
                 <article class="tile is-child notification is-danger">
-                    <p class="title">Weather Forecast</p>
-                    <p class="subtitle">Now / Today / Tomorrow ( / Next?)</p>
-                    <div class="content">
-                        <!-- Content -->
+                    <div class="row">
+                        <div class="item icon">
+                            <i class="wi wi-day-sunny"></i>
+                        </div>
+                        <div class="item info-block">
+                            <div class="small" id="city">...</div>
+                            <div class="big">
+                                <span id="condition">...</span>,
+                                <span id="temperature">...</span>
+                            </div>
+                            <!--<div class="small">-->
+                                <!--<i class="wi wi-day-sunny"></i> 6:54 AM-->
+                                <!--<i class="wi wi-day-sunny"></i> 5:15 PM-->
+                                <!--<i class="wi wi-day-sunny"></i> Yesterday-->
+                            <!--</div>-->
+                            <div class="small">
+                                Cloudiness: <span id="cloudiness">...</span>
+                                Humidity: <span id="humidity">...</span>
+                            </div>
+                            <div class="small">
+                                Pressure: <span id="pressure">...</span>
+                                <span id="wind-parent">
+                                    Wind: <i class="wi wi-day-sunny" id="wind-icon"></i> <span id="wind-text">...</span>
+                                </span>
+                            </div>
+                        </div>
                     </div>
+                    <!--<div class="row">-->
+                        <!--<i class="wi wi-day-fog"></i>-->
+                        <!--<i class="wi wi-day-hail"></i>-->
+                        <!--<i class="wi wi-day-haze"></i>-->
+                    <!--</div>-->
+                    <!--<p class="title">Weather Forecast</p>-->
+                    <!--<p class="subtitle">Now / Today / Tomorrow ( / Next?)</p>-->
+                    <!--<div class="content">-->
+                        <!--&lt;!&ndash; Content &ndash;&gt;-->
+                    <!--</div>-->
                 </article>
             </div>
         </div>

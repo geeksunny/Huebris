@@ -18,7 +18,9 @@ const MAXIMUM_DAILY = 16;
 
 
 class Data {
+    // TODO: Share this class with client
     constructor(units) {
+        // TODO: Add option for rounding values in formatted strings
         this.units = units;
     }
 
@@ -42,6 +44,9 @@ class Data {
         // json.main.temp_max
         // json.main.sea_level (pressure)
         // json.main.grnd_level (pressure)
+        // json.sys.country
+        // json.sys.sunrise
+        // json.sys.sunset
     }
 
     parseForecast(json) {
@@ -54,6 +59,7 @@ class Data {
 
     _temperatureSuffix(lowercase = false) {
         // TODO: Make `lowercase` a configuration option
+        // TODO: Add configurable string templates for formatted values
         switch (this.units) {
             case 'imperial':
             default:
@@ -63,6 +69,11 @@ class Data {
             case 'internal':
                 return (lowercase) ? 'k' : 'K';
         }
+    }
+
+    _speedSuffix(/*lowercase = false*/) {
+        // TODO: Fill this out
+        return "mph";
     }
 
     get cityId() {
@@ -107,6 +118,10 @@ class Data {
 
     get wind() {
         return this._wind;
+    }
+
+    get windString() {
+        return `${this._wind.speed} ${this._speedSuffix()}`;
     }
 
     get precipitation() {
