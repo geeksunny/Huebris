@@ -45,7 +45,7 @@ class Weather {
         let condition = _data.conditions[0];
         ui.condition.innerText = condition.main;
         // TODO: Add functionality for alternative icons for day/night + all options within each desc
-        let conditionIcon = this._getIcon(_data.daytime, condition.description);
+        let conditionIcon = this._getIcon(_data.daytime, condition.id);
         if (!conditionIcon) {
             conditionIcon = 'wi-wu-unknown';
         }
@@ -69,9 +69,9 @@ class Weather {
         // TODO: Print the direction string next to speed
     }
 
-    _getIcon(daytime, desc) {
+    _getIcon(daytime, id) {
         let group = daytime ? 'day' : 'night';
-        return (this._iconMap[group][desc]) ? this._iconMap[group][desc] : this._iconMap.default[desc];
+        return (this._iconMap[group][id]) ? this._iconMap[group][id] : this._iconMap.default[id];
     }
 
 }
