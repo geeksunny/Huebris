@@ -218,12 +218,22 @@ app.use(express.static('html'));
 app.use('/css', express.static(path.join(__dirname, '/bower_components/weather-icons/css')));
 app.use('/font', express.static(path.join(__dirname, '/bower_components/weather-icons/font')));
 app.use('/css/bulma.css', express.static(path.join(__dirname, '/node_modules/bulma/css/bulma.css')));
-app.use('/js/weatherData.js', (req, res) => {
-    // TODO: Serve UI's Weather feature class here as well. export both classes.
-    res.set('Content-Type', 'application/JavaScript');
-    res.send(`'use strict';\n\n${WeatherApi.Data.toString()}\n\nexport default Data;`);
-});
 
+WeatherApi.parseIconMap().then((map) => {
+    app.use('/js/weatherData.js', (req, res) => {
+        // TODO: Serve UI's Weather feature class here as well. export both classes.
+        res.set('Content-Type', 'application/JavaScript');
+        res.send(`'use strict';
+        
+        const ICON_MAP = ${JSON.stringify(map)};
+        
+        ${WeatherApi.Data.toString()}
+        
+        export default { Data, ICON_MAP };`);
+    });
+}).catch((err) => {
+    console.log(err);
+});
 
 /* Features */
 const features = {

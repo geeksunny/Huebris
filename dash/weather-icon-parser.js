@@ -19,14 +19,14 @@ module.exports = {
                 };
             });
 
+            const file = path.join(__dirname, '/bower_components/weather-icons/css/weather-icons.css');
             fs.readFile(file, (err, css) => {
                 if (err) {
                     reject(err);
                 }
-                const file = path.join(__dirname, '/bower_components/weather-icons/css/weather-icons.css');
 
-                postcss([plugin]).process(css).then((result) => {
-                    let map;
+                postcss([plugin]).process(css, { from: undefined }).then((result) => {
+                    let map = {};
                     names.forEach((icon) => {
                         let match = /wi-owm(?:-(\w*))?(?:-(\d\d\d))/g.exec(icon);
                         let group = (match[1]) ? match[1] : 'default';
