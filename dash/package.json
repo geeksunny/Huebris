@@ -9,6 +9,7 @@
     "nodeimu": "file:nodeimu",
     "openweather-apis": "^3.3.5",
     "socket.io": "^2.0.4",
-    "uuid": "^3.2.1"
+    "uuid": "^3.2.1",
+    "postcss": "latest"
   }
 }
