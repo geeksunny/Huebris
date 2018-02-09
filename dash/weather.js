@@ -353,7 +353,7 @@ class Data {
     }
 
     get pressureString() {
-        return `${this._pressure} hPa`;
+        return `${this._pressure}hPa`;
     }
 
     get humidity() {
@@ -368,8 +368,14 @@ class Data {
         return this._wind;
     }
 
-    get windString() {
+    get windSpeedString() {
         return `${this._wind.speed} ${this._speedSuffix()}`;
+    }
+
+    get windDirectionString() {
+        // TODO: Return string based on `this._wind.deg`. ie `north`, `east by south-east`, etc
+        // TODO: add in precision argument for using 'XXX by XXX-XXX' string
+        return "North";
     }
 
     get precipitation() {
@@ -390,6 +396,8 @@ class Data {
 }
 
 // TODO: Only Weather and Hourly is supported by the free API key. This is the initial focus.
+// TODO: Implement weather alert info into server & client
+// TODO: Impement moon cycle into server & client
 class Weather {
     constructor(config) {
         this._lastUpdate = 0;

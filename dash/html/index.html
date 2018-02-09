@@ -6,6 +6,7 @@
     <title>Tile Dash</title>
     <link rel="stylesheet" href="css/bulma.css" />
     <link rel="stylesheet" href="css/weather-icons.css" />
+    <link rel="stylesheet" href="css/weather-icons-wind.css" />
     <script src="/socket.io/socket.io.js"></script>
     <script defer src="https://use.fontawesome.com/releases/v5.0.0/js/all.js"></script>
     <script type="module">
@@ -451,7 +452,8 @@
                 let width = row.clientWidth;
                 let _icon = row.childNodes[1];
                 let _info = row.childNodes[3];
-                let newWidth = width - node.clientWidth;
+                let newWidth = width - node.clientWidth - 35;
+                row.childNodes[3].style['width'] = `${newWidth}px`;
                 row.childNodes[3].style['max-width'] = `${newWidth}px`;
             });
         });
@@ -460,6 +462,18 @@
         body {
             /* Scaling base interface size */
             zoom: 75%;
+        }
+
+        .left {
+            text-align: left !important;
+        }
+
+        .right {
+            text-align: right !important;
+        }
+
+        .center {
+            text-align: center !important;
         }
 
         .section {
@@ -496,6 +510,15 @@
         article.ui-btn p:only-child svg,
         article.ui-btn p:nth-child(2) svg {
             margin: 10px auto;
+        }
+
+        #weather-tile .small.columns {
+            margin: 0px;
+        }
+
+        #weather-tile .small.columns .column {
+            padding: 0px 1px;
+            text-align: center;
         }
 
         #weather-tile .row {
@@ -570,34 +593,53 @@
                 <article class="tile is-child notification is-danger">
                     <div class="row">
                         <div class="item icon">
-                            <i class="wi wi-day-sunny" id="weather-icon"></i>
+                            <i class="wi wi-na" id="weather-icon" data-icon="wi-na"></i>
                         </div>
                         <div class="item info-block">
-                            <div class="small" id="city">...</div>
+                            <div class="small columns">
+                                <div class="column left" id="city">...</div>
+                                <div class="column right">
+                                    <i class="wi wi-time-1" id="time-calculated-icon" data-time="1"></i>
+                                    <span id="time-calculated-text">...</span>
+                                </div>
+                            </div>
                             <div class="big">
                                 <span id="condition">...</span>,
                                 <span id="temperature">...</span>
                             </div>
-                            <div class="small">
-                                <i class="wi wi-sunrise" id="sunrise-icon"></i> <span id="sunrise">...</span>
-                                <i class="wi wi-sunset" id="sunset-icon"></i> <span id="sunset">...</span>
-                                <!-- TODO: Pick a new icon for timeCalculated -->
-                                <i class="wi wi-day-sunny" id="calculated-icon"></i> <span id="timeCalculated">...</span>
+                            <div class="small columns">
+                                <div class="column">
+                                    <i class="wi wi-sunrise" id="sunrise-icon"></i>
+                                    <span id="sunrise">...</span>
+                                </div>
+                                <div class="column">
+                                    <i class="wi wi-sunset" id="sunset-icon"></i>
+                                    <span id="sunset">...</span>
+                                </div>
                             </div>
-                            <div class="small">
-                                <i class="wi wi-forecast-io-cloudy" id="cloudiness-icon"></i>
-                                    Cloudiness: <span id="cloudiness">...</span>
-                                <i class="wi wi-humidity" id="humidity-icon"></i>
-                                    Humidity: <span id="humidity">...</span>
+                            <div class="small columns">
+                                <div class="column">
+                                    <i class="wi wi-forecast-io-cloudy" id="cloudiness-icon"></i>
+                                    <span id="cloudiness">...</span>
+                                </div>
+                                <div class="column">
+                                    <i class="wi wi-humidity" id="humidity-icon"></i>
+                                    <span id="humidity">...</span>
+                                </div>
+                                <div class="column">
+                                    <i class="wi wi-barometer" id="pressure-icon"></i>
+                                    <span id="pressure">...</span>
+                                </div>
                             </div>
-                            <div class="small">
-                                <i class="wi wi-barometer" id="pressure-icon"></i>
-                                    Pressure: <span id="pressure">...</span>
-                            </div>
-                            <div class="small">
-                                <span id="wind-parent">
-                                    Wind: <i class="wi wi-day-sunny" id="wind-icon"></i> <span id="wind-text">...</span>
-                                </span>
+                            <div class="small columns">
+                                <div class="column">
+                                    <i class="wi wi-strong-wind" id="wind-icon"></i>
+                                    <span id="wind-speed-text">...</span>
+                                </div>
+                                <div class="column">
+                                    <i class="wi wi-wind towards-0-deg" id="wind-direction-icon" data-degree="0"></i>
+                                    <span id="wind-direction-text">...</span>
+                                </div>
                             </div>
                         </div>
                     </div>
