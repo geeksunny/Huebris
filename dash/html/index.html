@@ -4,10 +4,17 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1">
     <title>Tile Dash</title>
-    <link rel="stylesheet" href="css/bulma.css">
+    <link rel="stylesheet" href="css/bulma.css" />
+    <link rel="stylesheet" href="css/weather-icons.css" />
     <script src="/socket.io/socket.io.js"></script>
     <script defer src="https://use.fontawesome.com/releases/v5.0.0/js/all.js"></script>
-    <script type="text/javascript">
+    <script type="module">
+        'use strict';
+
+        // TODO: Move all features to a central setup location
+        import Weather from "./js/weather.js";
+        const weather = new Weather();
+
         document.addEventListener('DOMContentLoaded', () => {
             const ZOOM_LEVEL = .75; // Must match body's zoom CSS level
 
@@ -48,16 +55,8 @@
                             });
                             break;
                         case 'weather-tile':
-                            let _elems = {};
-                            _elems.city = node.querySelector('#city');
-                            _elems.condition = node.querySelector('#condition');
-                            _elems.temperature = node.querySelector('#temperature');
-                            _elems.cloudiness = node.querySelector('#cloudiness');
-                            _elems.pressure = node.querySelector('#pressure');
-                            _elems.windIconParent = node.querySelector('#wind-parent');
-                            _elems.windIcon = node.querySelector('#wind-icon');
-                            _elems.windText = node.querySelector('#wind-text');
-                            elems['weather'] = _elems;
+                            // TODO: Make weather from Weather() in feature init
+                            weather.ui = node;
                             break;
                         case 'system-tile':
                             //
@@ -398,32 +397,8 @@
 
             function updateWeather(data) {
                 // TODO: Update UI with updated weather data
-                console.log(data);
-                let ui = elems['weather'];
-                ui.city.innerText = data._cityName;
-                // TODO: Handle multiple conditions
-                console.log(data._conditions);
-                ui.condition.innerText = data._conditions[0].main;
-                ui.temperature.innerText = data._temperature;
-                ui.cloudiness.innerText = data._cloudiness;
-                ui.pressure.innerText = data._pressure;
-                // TODO: Wind ICON
-                // console.log(ui.windIcon());
-                ui.windText.innerText = data._wind.speed;
-
-                /*
-                // TODO: Use this after Weather.js' Data class is shared with client in weather client feature class
-                ui.city.innerText = data.city;
-                // TODO: Handle multiple conditions
-                console.log(data.conditions);
-                ui.condition.innerText = data.conditions[0].main;
-                ui.temperature.innerText = data.temperatureString;
-                ui.cloudiness.innerText = data.cloudinessString;
-                ui.pressure.innerText = data.pressureString;
-                // TODO: Wind ICON
-                console.log(ui.windIcon());
-                ui.windText.innerText = data.windString;
-                 */
+                // console.log(data);
+                weather.update(data);
             }
 
             let buttons = document.querySelectorAll('article.ui-btn .button');
@@ -469,7 +444,6 @@
                 let row = node.parentNode.parentNode;
                 let height = row.clientHeight;
 
-                console.log(`height: ${height}`);
                 let newHeight = (height / 2) - 10;
                 node.style['font-size'] = `${newHeight}px`;
                 node.style['line-height'] = `${newHeight}px`;
@@ -478,7 +452,6 @@
                 let _icon = row.childNodes[1];
                 let _info = row.childNodes[3];
                 let newWidth = width - node.clientWidth;
-                console.log(row.childNodes);
                 row.childNodes[3].style['max-width'] = `${newWidth}px`;
             });
         });
@@ -598,7 +571,7 @@
                 <article class="tile is-child notification is-danger">
                     <div class="row">
                         <div class="item icon">
-                            <i class="wi wi-day-sunny"></i>
+                            <i class="wi wi-day-sunny" id="weather-icon"></i>
                         </div>
                         <div class="item info-block">
                             <div class="small" id="city">...</div>
@@ -606,33 +579,29 @@
                                 <span id="condition">...</span>,
                                 <span id="temperature">...</span>
                             </div>
-                            <!--<div class="small">-->
-                                <!--<i class="wi wi-day-sunny"></i> 6:54 AM-->
-                                <!--<i class="wi wi-day-sunny"></i> 5:15 PM-->
-                                <!--<i class="wi wi-day-sunny"></i> Yesterday-->
-                            <!--</div>-->
                             <div class="small">
-                                Cloudiness: <span id="cloudiness">...</span>
-                                Humidity: <span id="humidity">...</span>
+                                <i class="wi wi-sunrise" id="sunrise-icon"></i> <span id="sunrise">...</span>
+                                <i class="wi wi-sunset" id="sunset-icon"></i> <span id="sunset">...</span>
+                                <!-- TODO: Pick a new icon for timeCalculated -->
+                                <i class="wi wi-day-sunny" id="calculated-icon"></i> <span id="timeCalculated">...</span>
                             </div>
                             <div class="small">
-                                Pressure: <span id="pressure">...</span>
+                                <i class="wi wi-forecast-io-cloudy" id="cloudiness-icon"></i>
+                                    Cloudiness: <span id="cloudiness">...</span>
+                                <i class="wi wi-humidity" id="humidity-icon"></i>
+                                    Humidity: <span id="humidity">...</span>
+                            </div>
+                            <div class="small">
+                                <i class="wi wi-barometer" id="pressure-icon"></i>
+                                    Pressure: <span id="pressure">...</span>
+                            </div>
+                            <div class="small">
                                 <span id="wind-parent">
                                     Wind: <i class="wi wi-day-sunny" id="wind-icon"></i> <span id="wind-text">...</span>
                                 </span>
                             </div>
                         </div>
                     </div>
-                    <!--<div class="row">-->
-                        <!--<i class="wi wi-day-fog"></i>-->
-                        <!--<i class="wi wi-day-hail"></i>-->
-                        <!--<i class="wi wi-day-haze"></i>-->
-                    <!--</div>-->
-                    <!--<p class="title">Weather Forecast</p>-->
-                    <!--<p class="subtitle">Now / Today / Tomorrow ( / Next?)</p>-->
-                    <!--<div class="content">-->
-                        <!--&lt;!&ndash; Content &ndash;&gt;-->
-                    <!--</div>-->
                 </article>
             </div>
         </div>
