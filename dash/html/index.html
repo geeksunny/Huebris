@@ -426,8 +426,8 @@
             });
 
             socket.on('updateThermostat', (data) => {
-                // TODO: data verification and console logging on update
-                elems.thermostat.innerText = data.temperatureFormatted;
+                let temp = data.temperatureFormatted;
+                elems.thermostat.innerText = (temp === null) ? 'Unavailable' : temp;
             });
 
             socket.on('updateWeather', (data) => {
@@ -541,7 +541,7 @@
     <div class="tile is-ancestor">
         <div class="tile is-vertical is-6">
             <div class="tile">
-                <div class="tile is-vertical">
+                <div class="tile is-vertical is-6">
                     <div class="tile is-parent" id="clock-tile">
                         <article class="tile is-child notification is-warning">
                             <p class="title" id="clock-time">3:30 PM</p>
@@ -554,9 +554,8 @@
                     </div>
                     <div class="tile is-parent" id="thermostat-tile">
                         <article class="tile is-child notification is-warning">
-                            <p class="subtitle">Inside</p>
-                            <p class="title" id="thermostat_value">--</p>
-                            <p class="subtitle">(Inside case, currently unvented)</p>
+                            <p class="subtitle">Inside Case</p>
+                            <p class="title" id="thermostat_value">Unavailable</p>
                         </article>
                     </div>
                 </div>

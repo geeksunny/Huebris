@@ -98,6 +98,7 @@ class Thermostat {
                 // TODO: Revisit this to ensure promises work here.
                 parent.callback(readings);
             }).catch((err) => {
+                parent.callback(this.readings); // CPU Temp will still be sent.
                 console.log("Error encountered while executing callback.");
                 console.log(err);
             });
@@ -109,19 +110,31 @@ class Thermostat {
     }
 
     get temperature() {
+        if (!this._initialized) {
+            return null;
+        }
         return (this._inFarenheit) ? Thermostat.toFarenheit(this._ambientTemperature) : this._ambientTemperature;
     }
 
     get temperatureFormatted() {
+        if (!this._initialized) {
+            return null;
+        }
         let label = (this._inFarenheit) ? "F" : "C";
         return `${this.temperature.toFixed(1)} °${label}`;
     }
 
     get pressure() {
+        if (!this._initialized) {
+            return null;
+        }
         return this._pressure;
     }
 
     get humidity() {
+        if (!this._initialized) {
+            return null;
+        }
         return this._humidity;
     }
 
