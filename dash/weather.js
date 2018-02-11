@@ -171,9 +171,21 @@ class Data {
     }
 
     get windDirectionString() {
-        // TODO: Return string based on `this._wind.deg`. ie `north`, `east by south-east`, etc
-        // TODO: add in precision argument for using 'XXX by XXX-XXX' string
-        return "North";
+        let directions = [
+            { deg: 360, name: 'North' },
+            { deg: 270, name: 'West' },
+            { deg: 180, name: 'South' },
+            { deg: 90, name: 'East' },
+            { deg: 0, name: 'North' }
+        ];
+        let primary, secondary;
+        for (let i in directions) {
+            let prev = directions[(i === 0) ? directions.length - 1 : i - 1];
+            let current = directions[i];
+            let next = directions[(i === directions.length - 1) ? 0 : i + 1];
+        }
+        // TODO : Return value!
+        // return this._getDirectionString(this._wind.deg);
     }
 
     get precipitation() {
