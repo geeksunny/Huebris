@@ -143,7 +143,7 @@ class Data {
     }
 
     get temperatureString() {
-        return `${this._temperature}° ${this._temperatureSuffix()}`;
+        return `${this._temperature.toFixed(0)}° ${this._temperatureSuffix()}`;
     }
 
     get pressure() {
@@ -172,20 +172,31 @@ class Data {
 
     get windDirectionString() {
         let directions = [
-            { deg: 360, name: 'North' },
-            { deg: 270, name: 'West' },
-            { deg: 180, name: 'South' },
+            { deg: 0, name: 'North' },
             { deg: 90, name: 'East' },
-            { deg: 0, name: 'North' }
+            { deg: 180, name: 'South' },
+            { deg: 270, name: 'West' },
+            { deg: 360, name: 'North' }
         ];
-        let primary, secondary;
-        for (let i in directions) {
-            let prev = directions[(i === 0) ? directions.length - 1 : i - 1];
-            let current = directions[i];
-            let next = directions[(i === directions.length - 1) ? 0 : i + 1];
+
+        let degrees = this.wind.deg;
+        let initial = parseInt(degrees / 90);
+        let interim = (degrees % 90);
+        let secondary = parseInt(interim / 45);
+        let _interim = (interim % 45);
+
+        let primaryName = directions[initial].name, direction = primaryName;
+        let secondaryName;
+        if (secondary) {
+            secondaryName = directions[initial+secondary].name;
+            if (initial % 2) {
+                let swap = primaryName;
+                primaryName = secondaryName;
+                secondaryName = swap;
+            }
+            direction = `${primaryName}-${secondaryName}`;
         }
-        // TODO : Return value!
-        // return this._getDirectionString(this._wind.deg);
+        return direction;
     }
 
     get precipitation() {
