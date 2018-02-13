@@ -1,4 +1,4 @@
-const { ServerFeature, ClientFeature } = require('./features');
+const { ServerFeature } = require('./features');
 const Switches = require('../../switch');
 const tools = require('../../libs/tools');
 

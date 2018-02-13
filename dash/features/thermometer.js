@@ -1,4 +1,4 @@
-const { ServerFeature, ClientFeature } = require('./features');
+const { ServerFeature } = require('./features');
 
 
 // TODO: ClientFeature class for UI updating

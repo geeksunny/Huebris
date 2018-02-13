@@ -1,25 +1,15 @@
-class ClientFeature {
-
-    /**
-     * Return a string of javascript code to be served to the client.
-     * @returns {string}
-     */
-    get javascript() {
-        return '';
-    }
-
-}
 
 class ServerFeature {
     /**
      * Feature constructor. Do not override.
      * @param data  Feature data
+     * @param featureManager    A reference to the FeatureManager this feature is registering with.
      */
     constructor(data, featureManager) {
         this._enabled = this._verify(data);
         this._running = this.enabled && this._setup(data, featureManager);
         if (this.running) {
-            this._clientFeature = this._setupClientFeature();
+            this._clientFeatureInitialized = this._setupClientFeature();
         }
     }
 
@@ -64,15 +54,23 @@ class ServerFeature {
 
     /**
      * Set up this feature's client feature. Override this if a client feature will be used.
-     * @returns {ClientFeature} The prepared ClientFeature object.
+     * @returns {boolean}   True if the client feature was initialized.
      * @private
      */
     _setupClientFeature() {
-        return null;
+        return false;
     }
 
-    get clientFeature() {
-        return this._clientFeature;
+    /**
+     * Return a string of javascript code to be served to the client.
+     * @returns {string}
+     */
+    get clientJavascript() {
+        return '';
+    }
+
+    get hasClientFeature() {
+        return this._clientFeatureInitialized;
     }
 
     get enabled() {
@@ -121,4 +119,4 @@ class FeatureManager {
     }
 }
 
-module.exports = { ServerFeature, ClientFeature , FeatureManager };
+module.exports = { ServerFeature, FeatureManager };
