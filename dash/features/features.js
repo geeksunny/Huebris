@@ -5,12 +5,30 @@ class ServerFeature {
      * @param data  Feature data
      * @param featureManager    A reference to the FeatureManager this feature is registering with.
      */
-    constructor(data, featureManager) {
+    constructor(data) {
+        // TODO: Promisify! Call constructors from within a promise chain resolved once setup is complete
         this._enabled = this._verify(data);
-        this._running = this.enabled && this._setup(data, featureManager);
-        if (this.running) {
-            this._clientFeatureInitialized = this._setupClientFeature();
-        }
+    }
+
+    setup(data, featureManager) {
+        return new Promise((resolve, reject) => {
+            resolve(this.enabled && this._setup(data, featureManager));
+        }).then((running) => {
+            this._running = running;
+            return new Promise((resolve, reject) => {
+                if (running) {
+                    resolve(this._setupClientFeature().then((featureInitialized) => {
+                        this._clientFeatureInitialized = featureInitialized;
+                        resolve(featureInitialized);
+                    }).catch((err) => {
+                        this._clientFeatureInitialized = false;
+                        reject(err);
+                    }));
+                }
+            });
+        // }).catch((err) => {
+        //     // TODO
+        });
     }
 
     /**
@@ -54,11 +72,13 @@ class ServerFeature {
 
     /**
      * Set up this feature's client feature. Override this if a client feature will be used.
-     * @returns {boolean}   True if the client feature was initialized.
+     * @returns {Promise<any>}  A Promise to be resolved once the feature setup is complete.
      * @private
      */
     _setupClientFeature() {
-        return false;
+        return new Promise((resolve, reject) => {
+            reject('No client feature setup provided.');
+        });
     }
 
     /**
@@ -100,15 +120,26 @@ class FeatureManager {
         return this._features;
     }
 
-    getFeature(featureName) {
-        return this._features[featureName];
+    getFeature(feature) {
+        return this._features[(typeof feature === 'string') ? feature : feature.name];
     }
 
     register(feature, featureData) {
-        // TODO: init client here too? Or keep that inside the server class?
         let _server = feature.server;
-        let _feature = new _server(featureData, this);
+        let _feature = new _server(featureData);
         this._features[feature.name] = _feature;
+        _feature.setup(featureData, this).then((hasClientFeature) => {
+            if (hasClientFeature) {
+                this._io.use(`/js/${feature.name}.js`, (req, res) => {
+                    res.set('Content-Type', 'application/JavaScript');
+                    res.send(`'use strict';
+                    ${_feature.clientJavascript}
+                    //export default {}`);
+                });
+            }
+        // }).catch((err) => {
+            //     // TODO
+        });
         return _feature;
     }
 
