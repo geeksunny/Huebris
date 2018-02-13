@@ -24,7 +24,6 @@ const parseIconMap = () => {
 };
 
 class Data {
-    // TODO: Share this class with client
     constructor(data) {
         // TODO: Add option for rounding values in formatted strings
         // this.units = units;  // TODO: Add code for passing in value for `units`
@@ -179,7 +178,7 @@ class Data {
             { deg: 360, name: 'North' }
         ];
 
-        let degrees = this.wind.deg;
+        let degrees = parseInt(this.wind.deg);
         let initial = parseInt(degrees / 90);
         let interim = (degrees % 90);
         let secondary = parseInt(interim / 45);

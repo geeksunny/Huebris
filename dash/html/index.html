@@ -512,13 +512,28 @@
             margin: 10px auto;
         }
 
+        #weather-tile article {
+            padding-right: 32px;
+        }
+
         #weather-tile .small.columns {
             margin: 0px;
         }
 
         #weather-tile .small.columns .column {
             padding: 0px 1px;
+        }
+
+        #weather-tile .small.columns .column, #weather-tile .small.columns .column:only-child {
             text-align: center;
+        }
+
+        #weather-tile .small.columns .column:first-child {
+            text-align: left;
+        }
+
+        #weather-tile .small.columns .column:last-child {
+            text-align: right;
         }
 
         #weather-tile .row {
@@ -597,8 +612,8 @@
                         </div>
                         <div class="item info-block">
                             <div class="small columns">
-                                <div class="column left" id="city">...</div>
-                                <div class="column right">
+                                <div class="column" id="city">...</div>
+                                <div class="column">
                                     <i class="wi wi-time-1" id="time-calculated-icon" data-time="1"></i>
                                     <span id="time-calculated-text">...</span>
                                 </div>

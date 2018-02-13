@@ -65,7 +65,7 @@ class Weather {
         ui.humidity.innerText = _data.humidityString;
         ui.pressure.innerText = _data.pressureString;
 
-        this._changeIcon(ui.windDirectionIcon, 'degree', _data.wind.deg, 'towards-', '-deg');
+        this._changeIcon(ui.windDirectionIcon, 'degree', parseInt(_data.wind.deg), 'towards-', '-deg');
         ui.windSpeedText.innerText = _data.windSpeedString;
         ui.windDirectionText.innerText = _data.windDirectionString;
     }
