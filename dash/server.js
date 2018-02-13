@@ -106,6 +106,8 @@ WeatherApi.parseIconMap().then((map) => {
         
         const ICON_MAP = ${JSON.stringify(map)};
         
+        ${WeatherApi.Direction.toString()}
+
         ${WeatherApi.Data.toString()}
         
         export default { Data, ICON_MAP };`);

@@ -23,15 +23,146 @@ const parseIconMap = () => {
     return parser.parse();
 };
 
+class Direction {
+    constructor(options = Direction.DefaultOptions) {
+        let _options = Direction.customizeOptions(options);
+        let {strings, hyphenate, tertiaryPrefix, useTertiary} = _options;
+        this.strings = strings;
+        this.hyphenate = hyphenate;
+        this.tertiaryPrefix = tertiaryPrefix;
+        this.useTertiary = useTertiary;
+    }
+
+    static get DefaultOptions() {
+        return {
+            strings: Direction.Strings,
+            hyphenate: false,
+            tertiaryPrefix: '',
+            useTertiary: true
+        }
+    }
+
+    static get Strings() {
+        return {north: 'N', east: 'E', south: 'S', west: 'W'};
+    }
+
+    static customizeOptions(options) {
+        let result = Direction.DefaultOptions;
+        for (let key in options) {
+            // noinspection JSUnfilteredForInLoop
+            result[key] = options[key];
+        }
+        return result;
+    }
+
+    static toDirections(degrees, options = Direction.DefaultOptions) {
+        // TODO: Logic for options.useTertiary
+        let {strings} = Direction.customizeOptions(options);
+        let directions = [ strings.north, strings.east, strings.south, strings.west, strings.north ];
+
+        // noinspection JSCheckFunctionSignatures
+        let pos = parseInt((degrees / 22.5) + .5) % 16;
+        // noinspection JSCheckFunctionSignatures
+        let major = parseInt(pos / 4);
+        // noinspection JSCheckFunctionSignatures
+        let minor = parseInt((pos % 4) / 2);
+        // noinspection JSCheckFunctionSignatures
+        let fine = parseInt((pos % 4) % 2);
+
+        let _pos = (minor * 2) + fine;
+        if (_pos) {
+            let secondary = (major % 2)
+                ? [directions[major + 1], directions[major]]
+                : [directions[major], directions[major + 1]];
+            if (fine) {
+                secondary.unshift(directions[major + minor]);   // Push primary direction to front of results
+            }
+            return secondary;
+        }
+        return [directions[major]];
+    }
+
+    static toDirection(degrees, options = Direction.DefaultOptions) {
+        let {hyphenate, tertiaryPrefix} = Direction.customizeOptions(options);
+        let directions = this.toDirections(degrees, options);
+        if (directions.length > 1) {
+            if (hyphenate) {
+                console.log('hyphenating');
+                directions[directions.length - 1] = `-${directions[directions.length - 1]}`;
+            }
+            if (tertiaryPrefix && directions.length % 2) {
+                directions[0] = `${directions[0]}${tertiaryPrefix}`;
+            }
+        }
+        return directions.join('');
+    }
+
+    get strings() {
+        return this._strings;
+    }
+
+    set strings(strings) {
+        this._strings = {north: strings.north, east: strings.east, south: strings.south, west: strings.west};
+    }
+
+    get hyphenate() {
+        return this._hyphenate;
+    }
+
+    set hyphenate(hyphenate) {
+        this._hyphenate = hyphenate;
+    }
+
+    get tertiaryPrefix() {
+        return this._tertiaryPrefix;
+    }
+
+    set tertiaryPrefix(prefix) {
+        this._tertiaryPrefix = prefix;
+    }
+
+    get useTertiary() {
+        return this._useTertiary;
+    }
+
+    set useTertiary(useTertiary) {
+        this._useTertiary = useTertiary;
+    }
+
+    get options() {
+        return {
+            strings: this.strings,
+            hyphenate: this.hyphenate,
+            tertiaryPrefix: this.tertiaryPrefix,
+            useTertiary: this.useTertiary
+        }
+    }
+
+    toDirections(degrees) {
+        return Direction.toDirections(degrees, this.options);
+    }
+
+    toDirection(degrees) {
+        return Direction.toDirection(degrees, this.options);
+    }
+}
+
 class Data {
     constructor(data) {
         // TODO: Add option for rounding values in formatted strings
         // this.units = units;  // TODO: Add code for passing in value for `units`
+
         if (data) {
             Object.getOwnPropertyNames(data).forEach((key) => {
                 this[key] = data[key];
             });
         }
+
+        this._direction = new Direction({
+            strings: {north: 'North', east: 'East', south: 'South', west: 'West'},
+            hyphenate: true,
+            tertiaryPrefix: ' '
+        });
     }
 
     parseWeather(json) {
@@ -169,33 +300,9 @@ class Data {
         return `${this._wind.speed} ${this._speedSuffix()}`;
     }
 
+    // TODO: get windDirectionAbbrev, E, NE, ENE, etc
     get windDirectionString() {
-        let directions = [
-            { deg: 0, name: 'North' },
-            { deg: 90, name: 'East' },
-            { deg: 180, name: 'South' },
-            { deg: 270, name: 'West' },
-            { deg: 360, name: 'North' }
-        ];
-
-        let degrees = parseInt(this.wind.deg);
-        let initial = parseInt(degrees / 90);
-        let interim = (degrees % 90);
-        let secondary = parseInt(interim / 45);
-        let _interim = (interim % 45);
-
-        let primaryName = directions[initial].name, direction = primaryName;
-        let secondaryName;
-        if (secondary) {
-            secondaryName = directions[initial+secondary].name;
-            if (initial % 2) {
-                let swap = primaryName;
-                primaryName = secondaryName;
-                secondaryName = swap;
-            }
-            direction = `${primaryName}-${secondaryName}`;
-        }
-        return direction;
+        return this._direction.toDirection(parseInt(this.wind.deg));
     }
 
     get precipitation() {
@@ -405,5 +512,6 @@ class Weather {
 module.exports = {
     Weather: Weather,
     Data: Data,
+    Direction: Direction,
     parseIconMap: parseIconMap
 };
