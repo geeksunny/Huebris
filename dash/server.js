@@ -48,6 +48,10 @@ function getFeatureList() {
 }
 
 
+/* Logger */
+const Log = require('./log').logger('Server');
+
+
 /* Server */
 const CLIENTS = {}; // { `UUID`: `clientIP` }'
 
@@ -60,8 +64,7 @@ function newUuid() {
 }
 
 io.on('connection', (socket) => {
-    // TODO: Add log functions/class to manage client activity logs
-    console.log(`Client connected! IP: ${socket.handshake.address}`);
+    Log(`Client connected! IP: ${socket.handshake.address}`);
 
     socket.on('uuid', (uuid, ack) => {
         if (tools.isEmpty(uuid)) {
@@ -70,15 +73,16 @@ io.on('connection', (socket) => {
             ack(uuid);
         }
         CLIENTS[uuid] = socket.handshake.address;
-        console.log(`UUID ${uuid} registered with ${JSON.stringify(CLIENTS[uuid])}`);
+        Log(`UUID ${uuid} registered with ${JSON.stringify(CLIENTS[uuid])}`);
+        console.log();
     });
 
     socket.emit('features', getFeatureList());
 
     socket.on('requestAll', (data) => {
-        console.log('Performing full feature data refresh');
+        Log('Performing full feature data refresh');
         tools.forEach(features, (feature, name) => {
-            console.log('Refreshing data for '+name);
+            Log('Refreshing data for '+name);
             feature.update(socket, true);
         });
     });
@@ -95,6 +99,6 @@ options.hostnames.forEach(((hostname) => {
         host: hostname,
         port: 3000
     }, () => {
-        console.log(`Server listening on ${hostname}:3000`);
+        Log(`Server listening on ${hostname}:3000`);
     })
 }));
