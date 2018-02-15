@@ -1,4 +1,5 @@
 const chalk = require('chalk');
+const tools = require('../libs/tools');
 
 
 class Color {
@@ -23,6 +24,7 @@ const Colors = [
     new Color(chalk.magentaBright, chalk.bgMagentaBright.white),
     new Color(chalk.cyanBright, chalk.bgCyanBright.white),
 ];
+tools.shuffle(Colors);
 
 class Log {
     constructor() {
