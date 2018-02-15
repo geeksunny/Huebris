@@ -22,8 +22,8 @@ app.use('/font', express.static(path.join(__dirname, '/bower_components/weather-
 app.use('/css/bulma.css', express.static(path.join(__dirname, '/node_modules/bulma/css/bulma.css')));
 
 /* Features */
-const { FeatureManager } = require('./features/features');
-const featureMgr = new FeatureManager(io);
+const { ServerFeatureManager } = require('./features/features');
+const featureMgr = new ServerFeatureManager(io, app);
 
 const Lightswitches = require('./features/lightswitches');
 let lightswitches = featureMgr.register(Lightswitches, huebris.lightswitches);

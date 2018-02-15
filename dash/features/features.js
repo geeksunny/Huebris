@@ -1,9 +1,8 @@
-
-class ServerFeature {
+// TODO: Consolidate shared code between ClientFeature and ServerFeature into Feature; FeatureManager to work with both types.
+class Feature {
     /**
      * Feature constructor. Do not override.
      * @param data  Feature data
-     * @param featureManager    A reference to the FeatureManager this feature is registering with.
      */
     constructor(data) {
         // TODO: Promisify! Call constructors from within a promise chain resolved once setup is complete
@@ -11,24 +10,7 @@ class ServerFeature {
     }
 
     setup(data, featureManager) {
-        return new Promise((resolve, reject) => {
-            resolve(this.enabled && this._setup(data, featureManager));
-        }).then((running) => {
-            this._running = running;
-            return new Promise((resolve, reject) => {
-                if (running) {
-                    resolve(this._setupClientFeature().then((featureInitialized) => {
-                        this._clientFeatureInitialized = featureInitialized;
-                        resolve(featureInitialized);
-                    }).catch((err) => {
-                        this._clientFeatureInitialized = false;
-                        reject(err);
-                    }));
-                }
-            });
-        // }).catch((err) => {
-        //     // TODO
-        });
+        throw "Not implemented!"
     }
 
     /**
@@ -48,9 +30,9 @@ class ServerFeature {
         }
     }
 
-    unregister(data) {
-        // TODO!!
-    }
+    // unregister(data) {
+    //     // TODO!! is an unregister() method necessary? What arguments would it need?
+    // }
 
     update(socket) {
         // TODO: document override purpose
@@ -66,9 +48,57 @@ class ServerFeature {
     }
 
     /**
-     * Feature setup method that executes if the feature is enabled.
+     * Feature setup method that executes if the feature is enabled. Override to handle feature setup.
+     * @param data  Feature configuration data
+     * @param featureManager    The {FeatureManager} currently initializing this feature.
+     * @private
      */
     _setup(data, featureManager) {}
+
+    /**
+     * @returns {boolean}   True if this feature is enabled.
+     */
+    get enabled() {
+        return this._enabled;
+    }
+
+    /**
+     * @returns {boolean}   True if this feature is running.
+     */
+    get running() {
+        return this._running;
+    }
+}
+
+class ClientFeature extends Feature {
+    // TODO: ClientFeature should handle creation of UI tiles via templating system
+
+}
+
+class ServerFeature extends Feature {
+    setup(data, featureManager) {
+        // TODO: Move the general logic into Feature class
+        return new Promise((resolve, reject) => {
+            resolve(this.enabled && this._setup(data, featureManager));
+        }).then((running) => {
+            this._running = running;
+            return new Promise((resolve, reject) => {
+                if (running) {
+                    resolve(this._setupClientFeature().then((featureInitialized) => {
+                        this._clientFeatureInitialized = featureInitialized;
+                        return featureInitialized;
+                    }).catch((err) => {
+                        this._clientFeatureInitialized = false;
+                        reject(err);
+                    }));
+                } else {
+                    resolve(false);
+                }
+            });
+        // }).catch((err) => {
+        //     // TODO
+        });
+    }
 
     /**
      * Set up this feature's client feature. Override this if a client feature will be used.
@@ -92,28 +122,26 @@ class ServerFeature {
     get hasClientFeature() {
         return this._clientFeatureInitialized;
     }
-
-    get enabled() {
-        return this._enabled;
-    }
-
-    get running() {
-        return this._running;
-    }
 }
 
 class FeatureManager {
     /**
      *
      * @param io Current Socket IO connection.
+     * @param featureKey
      */
-    constructor(io) {
+    constructor(io, featureKey = 'client') {
         this._io = io;
+        this._featureKey = featureKey;
         this._features = {};
     }
 
     _broadcast(event, data) {
         this._io.emit(event, data);
+    }
+
+    get featureKey() {
+        return this._featureKey;
     }
 
     get features() {
@@ -124,22 +152,20 @@ class FeatureManager {
         return this._features[(typeof feature === 'string') ? feature : feature.name];
     }
 
-    register(feature, featureData) {
-        let _server = feature.server;
-        let _feature = new _server(featureData);
+    /**
+     *
+     * @param feature
+     * @param featureData
+     * @param callback  A function that receives the resulting feature for further processing
+     * @returns {Feature}
+     */
+    register(feature, featureData, callback) {
+        let _class = feature[this.featureKey];
+        let _feature = new _class(featureData);
         this._features[feature.name] = _feature;
-        _feature.setup(featureData, this).then((hasClientFeature) => {
-            if (hasClientFeature) {
-                this._io.use(`/js/${feature.name}.js`, (req, res) => {
-                    res.set('Content-Type', 'application/JavaScript');
-                    res.send(`'use strict';
-                    ${_feature.clientJavascript}
-                    //export default {}`);
-                });
-            }
-        // }).catch((err) => {
-            //     // TODO
-        });
+        if (callback) {
+            callback(_feature);
+        }
         return _feature;
     }
 
@@ -150,4 +176,32 @@ class FeatureManager {
     }
 }
 
-module.exports = { ServerFeature, FeatureManager };
+class ServerFeatureManager extends FeatureManager {
+    constructor(io, server, featureKey = 'server') {
+        super(io, featureKey);
+        this._server = server;
+    }
+
+    register(feature, featureData, callback) {
+        let _callback = (_feature) => {
+            _feature.setup(featureData, this).then((hasClientFeature) => {
+                if (hasClientFeature) {
+                    this._server.use(`/js/${feature.name}.js`, (req, res) => {
+                        res.set('Content-Type', 'application/JavaScript');
+                        res.send(`'use strict';
+                        ${_feature.clientJavascript}
+                        //export default {}`);
+                    });
+                }
+                // }).catch((err) => {
+                //     // TODO
+            });
+            if (callback) {
+                callback(_feature);
+            }
+        };
+        return super.register(feature, featureData, _callback);
+    }
+}
+
+module.exports = { Feature, ServerFeature, ClientFeature, FeatureManager, ServerFeatureManager };

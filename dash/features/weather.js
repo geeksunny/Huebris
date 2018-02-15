@@ -471,13 +471,14 @@ class WeatherServer extends ServerFeature {
                     console.log(`Unexpected configuration value! { ${key}: ${value}`);
             }
         });
+        return true;
     }
 
     _setupClientFeature() {
         // TODO: Start updateIntervals here? Or wait until first client registration?
         return parseIconMap().then((map) => {
             this._iconMap = map;
-            return true
+            return true;
         }).catch((err) => {
             console.log(`Encountered error while parsing Weather Icon Map: ${err}`);
             return false;
