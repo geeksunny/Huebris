@@ -1,74 +1,185 @@
 const chalk = require('chalk');
 const tools = require('../libs/tools');
+const util = require('util');
 
 
 class Color {
-    constructor(text, bg) {
-        this.text = text;
-        this.title = bg;
+    constructor(text, title) {
+        this._text = text;
+        this._title = title;
+    }
+
+    static create(r, g, b) {
+        return new Color(
+            chalk.rgb(r, g, b),
+            // TODO: revisit text color inversion math for title color
+            chalk.bgRgb(r, g, b).rgb(255-r, 255-g, 255-b)
+        );
+    }
+
+    static random() {
+        let vals = [];
+        [1,2,3].forEach((_, i) => {
+            vals.push(Math.floor(Math.random() * 255));
+        });
+        return Color.create(vals[0], vals[1], vals[2]);
+    }
+
+    text(text) {
+        return this._text(text);
+    }
+
+    title(title) {
+        // return this._title.inverse(title);
+        return this._title(title);
     }
 }
 
-const Colors = [
-    new Color(chalk.red, chalk.bgRed.white),
-    new Color(chalk.green, chalk.bgGreen.white),
-    new Color(chalk.yellow, chalk.bgYellow.white),
-    new Color(chalk.blue, chalk.bgBlue.white),
-    new Color(chalk.magenta, chalk.bgMagenta.white),
-    new Color(chalk.cyan, chalk.bgCyan.white),
-    new Color(chalk.white, chalk.bgWhite.black),
-    new Color(chalk.redBright, chalk.bgRedBright.white),
-    new Color(chalk.greenBright, chalk.bgGreenBright.white),
-    new Color(chalk.yellowBright, chalk.bgYellowBright.white),
-    new Color(chalk.blueBright, chalk.bgBlueBright.white),
-    new Color(chalk.magentaBright, chalk.bgMagentaBright.white),
-    new Color(chalk.cyanBright, chalk.bgCyanBright.white),
-];
-tools.shuffle(Colors);
+const Colors = {
+    _: {},
+    get: (key) => {
+        return Colors._[key];
+    },
+    new: (key) => {
+        Colors._[key] = Color.random();
+        return Colors._[key];
+    },
+    Error: new Color(chalk.red, chalk.bgRed),
+    Log: new Color(chalk.green, chalk.bgGreen),
+    Warn: new Color(chalk.yellow, chalk.bgYellow),
+    Info: new Color(chalk.blue, chalk.bgBlue)
+    /* Other colors available for use */
+    // Color(chalk.magenta, chalk.bgMagenta.white),
+    // Color(chalk.cyan, chalk.bgCyan.white),
+    // Color(chalk.white, chalk.bgWhite.black),
+    // Color(chalk.redBright, chalk.bgRedBright.white),
+    // Color(chalk.greenBright, chalk.bgGreenBright.white),
+    // Color(chalk.yellowBright, chalk.bgYellowBright.white),
+    // Color(chalk.blueBright, chalk.bgBlueBright.white),
+    // Color(chalk.magentaBright, chalk.bgMagentaBright.white),
+    // Color(chalk.cyanBright, chalk.bgCyanBright.white)
+};
+
+let INSTANCE;
 
 class Log {
     constructor() {
+        this._stdout = process.stdout.write;
+        this._stderr = process.stderr.write;
+        this._console = {};
         // TODO: Add configuration options for silent operation (no console output), disabling colors, tag width, etc
         this._tagWidth = 23;
-        this._tags = {};
-        this._lastColorUsed = -1;
+        this._autoExpandWidth = true;
+        this.hook();
     }
 
-    _demo() {
-        Colors.forEach((color, index, list) => {
-            let title = 'TITLE';
-            let text = 'This is a log message!';
+    static demo() {
+        Array(30).forEach((_, i) => {
+            let title = `Random Color ${i}`;
+            let text = 'This is a log message to demonstrate a random color!';
+            let color = Color.random();
             let msg = `${color.title(title)} :: ${color.text(text)}`;
-            console.log(msg);
+            this._log(msg);
         });
     }
 
     _addTag(tag) {
-        if (tag.length > this._tagWidth) {
-            this._tagWidth = tag.length;
+        if (this._autoExpandWidth && tag.length >= this._tagWidth) {
+            this._tagWidth = tag.length + 2;
         }
-        this._tags[tag] = Colors[++this._lastColorUsed];
-        if (this._lastColorUsed === Colors.length - 1) {
-            this._lastColorUsed = 0;
-        }
+        return Colors.new(tag);
     }
 
     _tagColor(tag) {
-        if (!this._tags[tag]) {
-            this._addTag(tag);
+        let color = Colors.get(tag);
+        if (!color) {
+            color = this._addTag(tag);
         }
-        return this._tags[tag];
+        return color;
     }
 
-    _title(tag, color) {
+    _title(tag, color, silent = false) {
+        if (silent) {
+            tag = '';
+        }
         return color.title(`${Array(this._tagWidth - tag.length).join(' ')}${tag} `);
     }
 
-    log(tag, msg) {
-        // TODO: Handle multi-line messages with proper indentation
-        let color = this._tagColor(tag);
-        let _msg = `${this._title(tag, color)} :: ${color.text(msg)}`;
-        console.log(_msg);
+    hook() {
+        const logger = this;
+
+        ['log', 'warn', 'info', 'error'].forEach((method) => {
+            this._console[method] = console[method];
+            let logger;
+            switch (method) {
+                case 'log':
+                case 'info':
+                    logger = this.log;
+                    break;
+                case 'warn':
+                case 'error':
+                    logger = this.error;
+            }
+            console[method] = (data, ...args) => {
+                logger(method, data, args);
+            };
+        });
+
+        process.stdout.write = (function(write) {
+            return function(string, encoding, fd) {
+                logger.stdout(string);
+            }
+        })(process.stdout.write);
+
+        process.stderr.write = (function(write) {
+            return function(string, encoding, fd) {
+                logger.stderr(string);
+            }
+        })(process.stderr.write);
+
+        ['unhandledRejection', 'uncaughtException'].forEach((event) => {
+            process.on(event, (err) => {
+                logger.error(event, err.stack);
+            })
+        });
+    }
+
+    unhook() {
+        process.stdout.write = this._stdout;
+        process.stderr.write = this._stderr;
+        this._console.forEach((_orig, key) => {
+            console[key] = _orig;
+        });
+    }
+
+    _prepareMsg(tag, msg, ...args) {
+        let _msg = (!tools.isEmpty(args)) ? util.format(msg, args) : msg;
+        let lines = [];
+        _msg.split('\n').forEach((line, index) => {
+            let color = this._tagColor(tag);
+            lines.push(`${this._title(tag, color, index !== 0)} ${color.text(`:: ${line}`)}\n`);
+        });
+        return lines;
+    }
+
+    log(tag, msg, ...args) {
+        INSTANCE._prepareMsg(tag, msg, args).forEach((line) => {
+            INSTANCE._stdout.apply(process.stdout, [line]);
+        });
+    }
+
+    error(tag, msg, ...args) {
+        INSTANCE._prepareMsg(tag, msg, args).forEach((line) => {
+            INSTANCE._stderr.apply(process.stderr, [line]);
+        });
+    }
+
+    stdout(msg) {
+        this.log('stdout', msg);
+    }
+
+    stderr(msg) {
+        this.error('stderr', msg);
     }
 
     logger(tag) {
@@ -78,5 +189,7 @@ class Log {
     }
 }
 
+INSTANCE = new Log();
 
-module.exports = new Log();
+
+module.exports = INSTANCE;

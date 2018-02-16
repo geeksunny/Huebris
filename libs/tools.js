@@ -3,6 +3,17 @@ module.exports = {
     isEmpty(obj) {
         if (typeof obj === 'undefined' || obj === null) {
             return true;
+        } else if (obj instanceof Array) {
+            let empty = obj.length === 0;
+            if (!empty) {
+                for (let i = 0; i < obj.length; i++) {
+                    empty = this.isEmpty(obj[i]);
+                    if (!empty) {
+                        break;
+                    }
+                }
+            }
+            return empty;
         } else if (typeof obj === 'string') {
             return obj.length === 0;
         } else {
