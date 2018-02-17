@@ -12,52 +12,37 @@
     <script type="module">
         'use strict';
 
-        // TODO: Move all features to a central setup location
-        import Weather from "./js/weather.js";
-        const weather = new Weather();
-
         document.addEventListener('DOMContentLoaded', () => {
             const ZOOM_LEVEL = .75; // Must match body's zoom CSS level
 
+            // TODO: Move into WeatherClient (or rather WeatherServer.clientJavascript?) ALONG WITH THE ON-RESIZE CODE BLOCK
             // Trigger initial weather icon size adjustment
             setTimeout(() => {
                 window.dispatchEvent(new Event('resize'));
             }, 100);
 
-            const elems = {};
-            let tileNodes = document.querySelectorAll(
+            // TODO: Template classes for creating tiles
+            // TODO: Split this code into smaller files
+
+            const tileNodes = {};
+            // TODO: Replace querySelectorAll with a more generic tile selector. [data-tile='name']?
+            let nodes = document.querySelectorAll(
                 '#clock-tile, #thermostat-tile, #system-tile, #weather-tile, #livingroom-tile, #bedroom-tile');
-            if (tileNodes) {
-                tileNodes.forEach((node, index, list) => {
+            if (nodes) {
+                nodes.forEach((node, index, list) => {
+                    let name = node.id.replace('-tile', '');
                     switch (node.id) {
-                        case 'clock-tile':
-                            elems.clock = {
-                                time: node.querySelector('#clock-time'),
-                                day: node.querySelector('#clock-day'),
-                                date: node.querySelector('#clock-date')
-                            };
-                            break;
-                        case 'thermostat-tile':
-                            elems.thermostat = node.querySelector('#thermostat_value');
-                            break;
                         case 'livingroom-tile':
                         case 'bedroom-tile':
-                            let name = node.id.replace('-tile', '');
-                            elems[name] = { title: node.querySelector(`${name}-title`) };
-                            let buttons = node.querySelectorAll(`[data-group=${name}] p`);
-                            buttons.forEach((switchNode, switchIndex, switchList) => {
-                                let action = switchNode.dataset.action;
-                                elems[name][action] = { label: switchNode.querySelector('span') };
-                                // TODO: Add a wrapper function for getting this SVG via get property?
-                                let icon = switchNode.querySelector('i, svg');
-                                if (icon) {
-                                    elems[name][action].iconParent = icon.parentNode;
-                                }
-                            });
+                            if (!tileNodes.lightswitches) {
+                                tileNodes.lightswitches = {};
+                            }
+                            tileNodes.lightswitches[name] = node;
                             break;
+                        case 'clock-tile':
+                        case 'thermostat-tile':
                         case 'weather-tile':
-                            // TODO: Make weather from Weather() in feature init
-                            weather.ui = node;
+                            tileNodes[name] = node;
                             break;
                         case 'system-tile':
                             //
@@ -82,113 +67,11 @@
                 }
             }
 
-            class Clock {
-                constructor(seconds = false, militaryTime = false, callback = null) {
-                    this._time = null;
-                    this._day = null;
-                    this._date = null;
-
-                    this._timeOptions = {
-                        hour12: !militaryTime,
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    };
-                    this.seconds = seconds;
-
-                    this._dayOptions = {
-                        weekday: 'long'
-                    };
-                    this._dateOptions = {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric'
-                    };
-
-                    this._callback = null;
-                    if (callback) {
-                        this.callback = callback;
-                    }
-                    this._timeoutJob = null;
-                }
-
-                start(callback) {
-                    if (callback) {
-                        this.callback = callback;
-                    }
-                    if (this._callback === null) {
-                        throw "Clock callback required to start ticking.";
-                    }
-                    if (this._timeoutJob === null) {
-                        let timeout = (this._seconds) ? 1000 : 60000;
-
-                        // Begin the interval on the next second/minute
-                        let timeToFirstTimeout = timeout - (Date.now() % timeout);
-                        if (timeToFirstTimeout) {
-                            let parent = this;
-                            setTimeout(() => {
-                                parent._timeoutJob = setInterval(Clock._onTick(parent), timeout);
-                                Clock._onTick(parent)();
-                            }, timeToFirstTimeout);
-                        } else {
-                            this._timeoutJob = setInterval(Clock._onTick(this), timeout);
-                        }
-
-                        // Execute the initial tick;
-                        Clock._onTick(this)();
-                    }
-                }
-
-                stop() {
-                    if (this._timeoutJob !== null) {
-                        clearInterval(this._timeoutJob);
-                        this._timeoutJob = null;
-                    }
-                }
-
-                static _onTick(parent) {
-                    return () => {
-                        let now = new Date();
-                        parent._time = now.toLocaleTimeString('en-US', parent._timeOptions);
-                        let update = { time: parent._time };
-
-                        // TODO: check if date needs updating
-                        parent._day = now.toLocaleDateString('en-US', parent._dayOptions);
-                        update.day = parent._day;
-                        parent._date = now.toLocaleDateString('en-US', parent._dateOptions);
-                        update.date = parent._date;
-
-                        parent._callback(update);
-                    };
-                }
-
-                get time() {
-                    return {
-                        time: this._time,
-                        day: this._day,
-                        date: this._date
-                    };
-                }
-
-                set callback(callback) {
-                    if (!(callback instanceof Function)) {
-                        throw "Callback must be a function";
-                    }
-                    this._callback = callback;
-                }
-
-                set seconds(showSeconds) {
-                    // TODO: Update any existing timeoutInterval
-                    this._seconds = showSeconds;
-                    if (showSeconds) {
-                        this._timeOptions.second = '2-digit';
-                    } else {
-                        delete this._timeOptions.second;
-                    }
-                }
-            }
 
             class TapManager {
                 constructor() {
+                    // TODO: Can we add support for multiple touches for alternative actions?
+                    //  two-finger tap could bring up sub-menu, etc
                     // TODO: with only one `touching` does this limit to one button press at a time? is that desirable?
                     this.touching = false;
                     this.timeout = 500; // 1000?
@@ -305,17 +188,6 @@
                 }
             }
 
-            const clock = new Clock();
-            clock.start((time) => {
-                elems.clock.time.innerText = time.time;
-                if (time.day) {
-                    elems.clock.day.innerText = time.day;
-                }
-                if (time.date) {
-                    elems.clock.date.innerText = time.date;
-                }
-            });
-
             const socket = io();
             const tapMgr = new TapManager();
             tapMgr.onTap = handleTap;
@@ -369,13 +241,14 @@
                 socket.emit('lightswitch', options);
             }
 
+            // TODO: Move this into LightswitchesClient.update(data);
             function updateLightswitch(data) {
                 let {group, name, argument, item} = data;
                 if (item.changed || argument === 'request') {
-                    if (!elems.hasOwnProperty(group) || !elems[group].hasOwnProperty(name)) {
+                    if (!tileNodes.hasOwnProperty(group) || !tileNodes[group].hasOwnProperty(name)) {
                         return;
                     }
-                    let elem = elems[group][name];
+                    let elem = tileNodes[group][name];
                     // TODO: cycle through all buttins in group for update? PRESETS doesn't update an OFF switch.
                     switch (name) {
                         case 'toggle':
@@ -394,12 +267,6 @@
                             break;
                     }
                 }
-            }
-
-            function updateWeather(data) {
-                // TODO: Update UI with updated weather data
-                // console.log(data);
-                weather.update(data);
             }
 
             let buttons = document.querySelectorAll('article.ui-btn .button');

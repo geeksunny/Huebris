@@ -1,3 +1,6 @@
+const Log = require('../log');
+
+
 // TODO: Consolidate shared code between ClientFeature and ServerFeature into Feature; FeatureManager to work with both types.
 class Feature {
     /**
@@ -7,6 +10,7 @@ class Feature {
     constructor(data) {
         // TODO: Promisify! Call constructors from within a promise chain resolved once setup is complete
         this._enabled = this._verify(data);
+        this._running = false;
     }
 
     setup(data, featureManager) {
@@ -34,6 +38,7 @@ class Feature {
     //     // TODO!! is an unregister() method necessary? What arguments would it need?
     // }
 
+    // TODO: Rename this to broadcast(socket) and add update(data) to handle update req/resp on client/server
     update(socket) {
         // TODO: document override purpose
     }
@@ -72,6 +77,22 @@ class Feature {
 
 class ClientFeature extends Feature {
     // TODO: ClientFeature should handle creation of UI tiles via templating system
+    constructor(data) {
+        super(data);
+        // TODO: should uiParentNode be passed into constructor and use to set this.ui?
+    }
+
+    get ui() {
+        //return this._elems;
+    }
+
+    set ui(parentNode) {
+        // let elems = {};
+        // elems.city = parentNode.querySelector('#city');
+        // elems.timeCalculatedText = parentNode.querySelector('#time-calculated-text');
+        // elems.timeCalculatedIcon = parentNode.querySelector('#time-calculated-icon');
+        // this._elems = elems;
+    }
 
 }
 
@@ -183,6 +204,7 @@ class ServerFeatureManager extends FeatureManager {
     }
 
     register(feature, featureData, callback) {
+        Log.log('ServerFeatureManager', `Registering feature ${feature.name}`);
         let _callback = (_feature) => {
             _feature.setup(featureData, this).then((hasClientFeature) => {
                 if (hasClientFeature) {

@@ -1,11 +1,64 @@
-const { ServerFeature } = require('./features');
+const { ClientFeature, ServerFeature } = require('./features');
 const Switches = require('../../switch');
 const tools = require('../../libs/tools');
 
 const huejay = require('huejay');
 
 
-// TODO: ClientFeature class for UI updating
+class Lightswitch {
+    constructor(name) {
+        // todo: throw if empty (or use default name?)
+        this._name = name;
+    }
+
+    get ui() {
+        return this._elems;
+    }
+
+    set ui(parentNode) {
+        let elems = {};
+        let name = this._name;
+
+        elems[name] = { title: parentNode.querySelector(`${name}-title`) };
+        let buttons = parentNode.querySelectorAll(`[data-group=${name}] p`);
+        buttons.forEach((switchNode, switchIndex, switchList) => {
+            let action = switchNode.dataset.action;
+            elems[name][action] = { label: switchNode.querySelector('span') };
+            // TODO: Add a wrapper function for getting this SVG via get property?
+            let icon = switchNode.querySelector('i, svg');
+            if (icon) {
+                elems[name][action].iconParent = icon.parentNode;
+            }
+        });
+
+        this._elems = elems;
+    }
+}
+
+class LightswitchesClient extends ClientFeature {
+    constructor(data) {
+        super(data);
+        this._switches = {};
+    }
+
+    create(name) {
+        // TODO: Check if already registered and throw (or return null?)
+        this._switches[name] = new Lightswitch(name);
+        return this.get(name);
+    }
+
+    get(name) {
+
+    }
+
+    get ui() {
+        return this._elems;
+    }
+
+    set ui(parentNode) {
+        return super.ui = parentNode;
+    }
+}
 
 class Lightswitches extends ServerFeature {
     _verify(data) {
