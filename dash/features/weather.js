@@ -336,6 +336,37 @@ class WeatherClient extends ClientFeature {
         elem.dataset[key] = icon;
     }
 
+    static windowResizeHandler() {
+        return (event) => {
+            console.log('resize!');
+            let icons = document.querySelectorAll('#weather-tile .wi');
+            icons = [icons[0]]; // TODO: ONLY WORKING ON BIGGEST ICON... work on others later
+            icons.forEach((node, index) => {
+                let row = node.parentNode.parentNode;
+                let height = row.clientHeight;
+
+                let newHeight = (height / 2) - 10;
+                node.style['font-size'] = `${newHeight}px`;
+                node.style['line-height'] = `${newHeight}px`;
+
+                let width = row.clientWidth;
+                let _icon = row.childNodes[1];
+                let _info = row.childNodes[3];
+                let newWidth = width - node.clientWidth - 35;
+                row.childNodes[3].style['width'] = `${newWidth}px`;
+                row.childNodes[3].style['max-width'] = `${newWidth}px`;
+            });
+        };
+    }
+
+    static documentLoadedHandler() {
+        return (() => {
+            setTimeout(() => {
+                window.dispatchEvent(new Event('resize'));
+            }, 100);
+        });
+    }
+
     get ui() {
         return this._elems;
     }
@@ -484,6 +515,17 @@ class WeatherServer extends ServerFeature {
             console.log(`Encountered error while parsing Weather Icon Map: ${err}`);
             return false;
         });
+    }
+
+    get clientJavascript() {
+        return `// Data class
+        ${Data.toString()}
+        // Weather Client
+        ${WeatherClient.toString()};
+        // window.onResize event // TODO: TEST TO MAKE SURE THIS WORKS
+        window.addEventListener('resize', ${WeatherClient.windowResizeHandler().toString()});
+        document.addEventListener('DOMContentLoaded', ${WeatherClient.documentLoadedHandler().toString()});
+        `;
     }
 
     get isDataFresh() {

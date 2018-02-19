@@ -15,12 +15,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             const ZOOM_LEVEL = .75; // Must match body's zoom CSS level
 
-            // TODO: Move into WeatherClient (or rather WeatherServer.clientJavascript?) ALONG WITH THE ON-RESIZE CODE BLOCK
-            // Trigger initial weather icon size adjustment
-            setTimeout(() => {
-                window.dispatchEvent(new Event('resize'));
-            }, 100);
-
             // TODO: Template classes for creating tiles
             // TODO: Split this code into smaller files
 
@@ -285,43 +279,15 @@
             });
 
             socket.on('features', (data) => {
+                // TODO: Setup feature classes
                 console.log(`Features: ${JSON.stringify(data)}`);
                 socket.emit('requestAll');
             });
 
-            socket.on('updateLightswitch', (data) => {
-                updateLightswitch(data);
-            });
-
+            // TODO: Move into ThermostatClient.update(data);
             socket.on('updateThermostat', (data) => {
                 let temp = data.temperatureFormatted;
-                elems.thermostat.innerText = (temp === null) ? 'Unavailable' : temp;
-            });
-
-            socket.on('updateWeather', (data) => {
-                updateWeather(data);
-            });
-        });
-        // Auto-scaling weather icons
-        window.addEventListener('resize', (event) => {
-            // TODO: Move this + weather update code to its own file. Attach its own document.domload event for intial resize
-            console.log('resize!');
-            let icons = document.querySelectorAll('#weather-tile .wi');
-            icons = [icons[0]]; // TODO: ONLY WORKING ON BIGGEST ICON... work on others later
-            icons.forEach((node, index) => {
-                let row = node.parentNode.parentNode;
-                let height = row.clientHeight;
-
-                let newHeight = (height / 2) - 10;
-                node.style['font-size'] = `${newHeight}px`;
-                node.style['line-height'] = `${newHeight}px`;
-
-                let width = row.clientWidth;
-                let _icon = row.childNodes[1];
-                let _info = row.childNodes[3];
-                let newWidth = width - node.clientWidth - 35;
-                row.childNodes[3].style['width'] = `${newWidth}px`;
-                row.childNodes[3].style['max-width'] = `${newWidth}px`;
+                tileNodes.thermostat.innerText = (temp === null) ? 'Unavailable' : temp;
             });
         });
     </script>
