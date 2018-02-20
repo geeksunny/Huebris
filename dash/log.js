@@ -138,6 +138,7 @@ class Log {
         })(process.stderr.write);
 
         ['unhandledRejection', 'uncaughtException'].forEach((event) => {
+            // TODO: store existing event handlers (if necessary) and release our handlers in unhook()
             process.on(event, (err) => {
                 logger.error(event, err.stack);
             })
@@ -157,7 +158,7 @@ class Log {
         let lines = [];
         _msg.split('\n').forEach((line, index) => {
             let color = this._tagColor(tag);
-            lines.push(`${this._title(tag, color, index !== 0)} ${color.text(`:: ${line}`)}\n`);
+            lines.push(`${this._title(tag, color, index !== 0)}  ${color.text(line)}\n`);
         });
         return lines;
     }

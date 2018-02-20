@@ -1,3 +1,5 @@
+/* Logger */
+const Log = require('./log').logger('Server');
 const path = require('path');
 const express = require('express');
 const app = express();
@@ -47,9 +49,6 @@ function getFeatureList() {
     return list;
 }
 
-
-/* Logger */
-const Log = require('./log').logger('Server');
 
 
 /* Server */
