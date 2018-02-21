@@ -6,14 +6,21 @@ class Feature {
     /**
      * Feature constructor. Do not override.
      * @param data  Feature data
+     * @param featureManager
      */
-    constructor(data) {
+    constructor(data, featureManager) {
         // TODO: Promisify! Call constructors from within a promise chain resolved once setup is complete
         this._enabled = this._verify(data);
         this._running = false;
+        this._featureManager = featureManager;
+        // TODO: Call this.setup(data) here
     }
 
-    setup(data, featureManager) {
+    get manager() {
+        return this._featureManager;
+    }
+
+    setup(data) {
         throw "Not implemented!"
     }
 
@@ -55,10 +62,9 @@ class Feature {
     /**
      * Feature setup method that executes if the feature is enabled. Override to handle feature setup.
      * @param data  Feature configuration data
-     * @param featureManager    The {FeatureManager} currently initializing this feature.
      * @private
      */
-    _setup(data, featureManager) {}
+    _setup(data) {}
 
     /**
      * @returns {boolean}   True if this feature is enabled.
@@ -77,9 +83,13 @@ class Feature {
 
 class ClientFeature extends Feature {
     // TODO: ClientFeature should handle creation of UI tiles via templating system
-    constructor(data) {
-        super(data);
+    constructor(data, featureManager) {
+        super(data, featureManager);
         // TODO: should uiParentNode be passed into constructor and use to set this.ui?
+    }
+
+    refresh(update = false) {
+        // 
     }
 
     get ui() {
@@ -97,10 +107,10 @@ class ClientFeature extends Feature {
 }
 
 class ServerFeature extends Feature {
-    setup(data, featureManager) {
+    setup(data) {
         // TODO: Move the general logic into Feature class
         return new Promise((resolve, reject) => {
-            resolve(this.enabled && this._setup(data, featureManager));
+            resolve(this.enabled && this._setup(data));
         }).then((running) => {
             this._running = running;
             return new Promise((resolve, reject) => {
@@ -206,7 +216,8 @@ class ServerFeatureManager extends FeatureManager {
     register(feature, featureData, callback) {
         Log.log('ServerFeatureManager', `Registering feature ${feature.name}`);
         let _callback = (_feature) => {
-            _feature.setup(featureData, this).then((hasClientFeature) => {
+            // TODO: Standardize .setup(data) to return a promise? Or should this.setup be ran inside Feature.constructor?
+            _feature.setup(featureData).then((hasClientFeature) => {
                 if (hasClientFeature) {
                     this._server.use(`/js/${feature.name}.js`, (req, res) => {
                         res.set('Content-Type', 'application/JavaScript');

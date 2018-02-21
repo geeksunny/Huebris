@@ -2,10 +2,12 @@ const { ClientFeature } = require('./features');
 
 
 class Clock extends ClientFeature {
-    constructor(seconds = false, militaryTime = false, callback = null) {
+    _setup(data) {
         this._time = null;
         this._day = null;
         this._date = null;
+
+        let {seconds = false, militaryTime = false} = data;
 
         this._timeOptions = {
             hour12: !militaryTime,
@@ -24,10 +26,11 @@ class Clock extends ClientFeature {
         };
 
         this._callback = null;
-        if (callback) {
-            this.callback = callback;
-        }
         this._timeoutJob = null;
+    }
+
+    _verify(data) {
+        return data instanceof Object;
     }
 
     get ui() {

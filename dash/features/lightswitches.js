@@ -36,8 +36,8 @@ class Lightswitch {
 }
 
 class LightswitchesClient extends ClientFeature {
-    constructor(data) {
-        super(data);
+    constructor(data, featureManager) {
+        super(data, featureManager);
         this._switches = {};
     }
 
@@ -70,7 +70,7 @@ class Lightswitches extends ServerFeature {
     ex. this._switches.livingroom.toggle = GroupToggleSwitch()
      */
 
-    _setup(data, featureManager) {
+    _setup(data) {
         let hueClient = new huejay.Client(data.credentials);
         this._switches = {};
         let props;
@@ -85,7 +85,7 @@ class Lightswitches extends ServerFeature {
                     options.client = hueClient;
                     options.callback = (item, argument) => {
                         console.log(`CALLBACK CALLED FOR (${group}, ${options.name}, ${argument})`);
-                        featureManager._broadcast('updateLightswitch',
+                        this.manager._broadcast('updateLightswitch',
                             { group: group, name: options.name, argument: argument, item: item });
                     };
                     this._switches[group][options.name] = new Switches[type](options);
