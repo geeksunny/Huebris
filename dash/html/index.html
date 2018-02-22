@@ -293,8 +293,17 @@
     </script>
     <style type="text/css">
         body {
+            background-color: #4a4a4a;
             /* Scaling base interface size */
             zoom: 75%;
+            /*noinspection CssInvalidPropertyValue*/
+            height: -webkit-fill-available;
+        }
+
+        .section {
+            padding: 32px;
+            /*noinspection CssInvalidPropertyValue*/
+            height: -webkit-fill-available;
         }
 
         .left {
@@ -307,10 +316,6 @@
 
         .center {
             text-align: center !important;
-        }
-
-        .section {
-            padding: 32px;
         }
 
         article.ui-label {
