@@ -9,6 +9,7 @@ try {
 }
 
 
+// TODO: Move this into features/thermometer's server code.
 class Thermostat {
     constructor() {
         this._initialized = IMU !== null;

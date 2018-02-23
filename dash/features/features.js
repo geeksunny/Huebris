@@ -46,6 +46,7 @@ class Feature {
     // }
 
     // TODO: Rename this to broadcast(socket) and add update(data) to handle update req/resp on client/server
+    // TODO: `send(data)`/`onReceive(data)`/`request(data)`/`handleRequest(data)`
     update(socket) {
         // TODO: document override purpose
     }
@@ -205,6 +206,10 @@ class FeatureManager {
         _feature.unregister(data);
         delete this._features[feature.name];
     }
+}
+
+class ClientFeatureManager extends FeatureManager {
+    // TODO: move the logic from html/index.html into here. automate and contain the setup
 }
 
 class ServerFeatureManager extends FeatureManager {

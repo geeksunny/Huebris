@@ -2,6 +2,10 @@ const aggregation = require('aggregation/es6');
 const Btn = require('./libs/btn').Button;
 const tools = require('./libs/tools');
 
+const Log = require('./dash/log');
+const log = (caller, msg) => {
+    Log.log(caller.constructor.name, msg);
+};
 
 /**
  *
@@ -42,7 +46,7 @@ class Switch {
                 let item = parent.ids[id];
                 let api = parent.getApi(parent.hueClient);
                 api.getById(item).then(item => {
-                    console.log('Performing action -- argument: '+argument);
+                    log(this, 'Performing action -- argument: '+argument);
                     let changed;
                     switch (argument) {
                         case 'reset':
@@ -58,13 +62,13 @@ class Switch {
                     item.changed = changed;
                     return (changed) ? api.save(item) : item;
                 }).then(item => {
-                    console.log('Action performed? '+((item.changed === true)?'YES':'NO'));
+                    log(this, 'Action performed? '+((item.changed === true)?'YES':'NO'));
                     if (this.callback) {
                         this.callback(item, argument);
                     }
                 }).catch(reason => {
-                    console.log('EXEC ERROR!');
-                    console.log(reason);
+                    log(this, 'EXEC ERROR!');
+                    log(this, reason);
                 });
             }
         };
@@ -114,6 +118,12 @@ class DashButtonSwitch extends Switch {
         // TODO: Should a message be logged if no buttons were defined yet?
     }
 
+    /**
+     * TODO!!
+     * @param name
+     * @param mac
+     * @param action
+     */
     registerButton(name, mac, action) {
         if (this.buttons._index.indexOf(mac) > -1) {
             throw 'This mac is already registered!';
@@ -167,7 +177,7 @@ class Mixin {
 
 class Action extends Mixin {
     initializer(options) {
-        //console.log(this.constructor.name);
+        //log(this, this.constructor.name);
     }
     performAction(item, argument) {}
 }
@@ -195,7 +205,7 @@ class Cycler extends Action {
     }
 
     get currentItem() {
-        console.log("currentItem: "+this.items[this.index]);
+        log(this, "currentItem: "+this.items[this.index]);
         return this.items[this.index];
     }
 

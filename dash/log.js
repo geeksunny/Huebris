@@ -66,6 +66,12 @@ const Colors = {
     // Color(chalk.cyanBright, chalk.bgCyanBright.white)
 };
 
+const DEFAULT_CONFIG = {
+    // TODO: Set values here. if Log is created and no config is passed then use these values.
+    // TODO: create function for creating the instance to allow a custom config passed in without needing a separate config file
+    // TODO: Allow config to be changed on the fly? OR should we be able to store private loggers?
+};
+
 let INSTANCE;
 
 class Log {
@@ -85,7 +91,7 @@ class Log {
             let text = 'This is a log message to demonstrate a random color!';
             let color = Color.random();
             let msg = `${color.title(title)} :: ${color.text(text)}`;
-            this._log(msg);
+            this.log(msg);
         });
     }
 
