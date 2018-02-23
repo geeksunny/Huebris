@@ -9,20 +9,26 @@ class Color {
         this._title = title;
     }
 
-    static create(r, g, b) {
+    static create(r, g, b, titleColor = null) {
+        let title = (titleColor && titleColor instanceof chalk) ? titleColor : chalk.rgb(255-r, 255-g, 255-b);
         return new Color(
             chalk.rgb(r, g, b),
-            // TODO: revisit text color inversion math for title color
-            chalk.bgRgb(r, g, b).rgb(255-r, 255-g, 255-b)
+            title.bgRgb(r, g, b)
         );
     }
 
-    static random() {
+    static random(lightTitleColor = chalk.rgb(0, 0, 0), darkTitleColor = chalk.rgb(255, 255, 255)) {
         let vals = [];
         [1,2,3].forEach((_, i) => {
             vals.push(Math.floor(Math.random() * 255));
         });
-        return Color.create(vals[0], vals[1], vals[2]);
+        let titleColor = Color.isLight(vals[0], vals[1], vals[2]) ? lightTitleColor : darkTitleColor;
+        return Color.create(vals[0], vals[1], vals[2], titleColor);
+    }
+
+    static isLight(r, g, b) {
+        let luminance = 1 - ((0.299 * r) + (0.587 * g) + (0.114 * b)) / 255;
+        return luminance < 0.5;
     }
 
     text(text) {
