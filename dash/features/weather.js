@@ -13,6 +13,7 @@ const api = require('openweather-apis');
 //     "units": "imperial"
 // };
 
+const NAME = 'Weather';
 
 const MINIMUM_UPDATE_INTERVAL = 600000; // 10 minutes, recommended / preferred minimum interval
 const MAXIMUM_DAILY = 16;
@@ -367,6 +368,10 @@ class WeatherClient extends ClientFeature {
         });
     }
 
+    get name() {
+        return NAME;
+    }
+
     get ui() {
         return this._elems;
     }
@@ -438,6 +443,10 @@ class WeatherClient extends ClientFeature {
 // TODO: Implement weather alert info into server & client
 // TODO: Impement moon cycle into server & client
 class WeatherServer extends ServerFeature {
+
+    get name() {
+        return NAME;
+    }
 
     register(socket, event, callback) {
         return super.register(socket, event, callback);
@@ -665,4 +674,4 @@ class WeatherServer extends ServerFeature {
     }
 }
 
-module.exports = { name: 'Weather', client: WeatherClient, server: WeatherServer };
+module.exports = { client: WeatherClient, server: WeatherServer };

@@ -1,7 +1,13 @@
 const { ClientFeature } = require('./features');
 
 
+const NAME = 'Clock';
+
 class Clock extends ClientFeature {
+    get name() {
+        return NAME;
+    }
+
     _setup(data) {
         this._time = null;
         this._day = null;
@@ -134,3 +140,5 @@ class Clock extends ClientFeature {
         }
     }
 }
+
+module.exports = { client: Clock }

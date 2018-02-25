@@ -5,6 +5,8 @@ const tools = require('../../libs/tools');
 const huejay = require('huejay');
 
 
+const NAME = 'Lightswitches';
+
 class Lightswitch {
     constructor(name) {
         // todo: throw if empty (or use default name?)
@@ -51,6 +53,10 @@ class LightswitchesClient extends ClientFeature {
 
     }
 
+    get name() {
+        return NAME;
+    }
+
     get ui() {
         return this._elems;
     }
@@ -61,6 +67,10 @@ class LightswitchesClient extends ClientFeature {
 }
 
 class Lightswitches extends ServerFeature {
+    get name() {
+        return NAME;
+    }
+
     _verify(data) {
         return data instanceof Object;
     }
@@ -143,4 +153,4 @@ class Lightswitches extends ServerFeature {
     }
 }
 
-module.exports = { name: 'Lightswitches', server: Lightswitches };
+module.exports = { server: Lightswitches, client: LightswitchesClient };
