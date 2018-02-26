@@ -45,10 +45,37 @@ class Feature {
     //     // TODO!! is an unregister() method necessary? What arguments would it need?
     // }
 
-    // TODO: Rename this to broadcast(socket) and add update(data) to handle update req/resp on client/server
-    // TODO: `send(data)`/`onReceive(data)`/`request(data)`/`handleRequest(data)`
-    update(socket) {
-        // TODO: document override purpose
+    send(data) {
+        this._featureManager.emit('send', {name: this.name, data: data});
+    }
+
+    /**
+     * Override to define how the feature handles incoming data.
+     * @interface
+     * @param data
+     */
+    onReceive(data) { }
+
+    // TODO: request could possibly be eliminated in favor of send?
+    request(data) {
+        this._featureManager.emit('request', {name: this.name, data: data});
+    }
+
+    /**
+     * Override to define how the feature handles incoming requests.
+     * @interface
+     * @param data
+     */
+    // TODO: request could possibly be eliminated in favor of send?
+    onRequest(data) { }
+
+    /**
+     * Override this to define the name that the FeatureManager will use to identify by.
+     * @interface
+     * @returns {string} Feature name
+     */
+    get name() {
+       throw "Not implemented!";
     }
 
     /**
@@ -89,7 +116,7 @@ class ClientFeature extends Feature {
         // TODO: should uiParentNode be passed into constructor and use to set this.ui?
     }
 
-    refresh(update = false) {
+    refreshUI(update = false) {
         // 
     }
 

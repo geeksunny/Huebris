@@ -1,8 +1,14 @@
 const { ClientFeature, ServerFeature } = require('./features');
 
 
+const NAME = 'Thermometer';
+
 // TODO: ClientFeature class for UI updating
 class ThermometerClient extends ClientFeature {
+
+    get name() {
+        return NAME;
+    }
 
     get ui() {
         return this._elems;
@@ -16,6 +22,10 @@ class ThermometerClient extends ClientFeature {
 }
 
 class ThermometerServer extends ServerFeature {
+    get name() {
+        return NAME;
+    }
+
     // TODO: Build in feature for keeping history of readings
     _verify(data) {
         return data instanceof Object;
@@ -55,4 +65,4 @@ class ThermometerServer extends ServerFeature {
     }
 }
 
-module.exports = { name: 'Thermometer', server: ThermometerServer };
+module.exports = { server: ThermometerServer, client: ThermometerClient };
