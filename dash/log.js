@@ -166,6 +166,9 @@ class Log {
     }
 
     _prepareMsg(tag, msg, ...args) {
+        if (msg instanceof Error) {
+            msg = msg.stack;
+        }
         let _msg = (!tools.isEmpty(args)) ? util.format(msg, args) : msg;
         let lines = [];
         _msg.split('\n').forEach((line, index) => {
