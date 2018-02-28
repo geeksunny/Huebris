@@ -220,8 +220,8 @@ class FeatureManager {
      */
     register(feature, featureData, callback) {
         let _class = feature[this.featureKey];
-        let _feature = new _class(featureData);
-        this._features[feature.name] = _feature;
+        let _feature = new _class(featureData, this);
+        this._features[_feature.name] = _feature;
         if (callback) {
             callback(_feature);
         }
