@@ -199,6 +199,10 @@ class FeatureManager {
         this._io.emit(event, data);
     }
 
+    log(message) {
+        console.log(`${this.constructor.name} :: ${message}`);
+    }
+
     get featureKey() {
         return this._featureKey;
     }
@@ -221,6 +225,7 @@ class FeatureManager {
     register(feature, featureData, callback) {
         let _class = feature[this.featureKey];
         let _feature = new _class(featureData, this);
+        this.log(`Registering feature ${_feature.name}`);
         this._features[_feature.name] = _feature;
         if (callback) {
             callback(_feature);
@@ -245,8 +250,12 @@ class ServerFeatureManager extends FeatureManager {
         this._server = server;
     }
 
+    log(message) {
+        // TODO: See about creating a global solution for differing client/server logging methods
+        Log.log('ServerFeatureManager', message);
+    }
+
     register(feature, featureData, callback) {
-        Log.log('ServerFeatureManager', `Registering feature ${feature.name}`);
         let _callback = (_feature) => {
             // TODO: Standardize .setup(data) to return a promise? Or should this.setup be ran inside Feature.constructor?
             _feature.setup(featureData).then((hasClientFeature) => {
