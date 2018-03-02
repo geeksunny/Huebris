@@ -24,27 +24,6 @@ class Feature {
         throw "Not implemented!"
     }
 
-    /**
-     * Register the feature with the given socket object.
-     * @param socket
-     * @param event
-     * @param callback
-     * @returns {boolean}   True if the socket was registered.
-     */
-    register(socket, event, callback) {
-        if (this.running) {
-            socket.on(event, callback);
-            return true;
-        } else {
-            console.log(`Feature ${this.constructor.name} is not running!`);
-            return false;
-        }
-    }
-
-    // unregister(data) {
-    //     // TODO!! is an unregister() method necessary? What arguments would it need?
-    // }
-
     send(data) {
         this._featureManager.emit('send', {name: this.name, data: data});
     }
@@ -222,7 +201,7 @@ class FeatureManager {
      * @param callback  A function that receives the resulting feature for further processing
      * @returns {Feature}
      */
-    register(feature, featureData, callback) {
+    add(feature, featureData, callback) {
         let _class = feature[this.featureKey];
         let _feature = new _class(featureData, this);
         this.log(`Registering feature ${_feature.name}`);
@@ -233,10 +212,44 @@ class FeatureManager {
         return _feature;
     }
 
-    unregister(feature, data) {
-        let _feature = this.getFeature(feature.name);
-        _feature.unregister(data);
-        delete this._features[feature.name];
+    // TODO: Is remove feature necessary?
+    // remove(feature, data) {
+    //     let _feature = this.getFeature(feature.name);
+    //     _feature.remove(data);
+    //     delete this._features[feature.name];
+    // }
+
+    /**
+     * Register a new socket connection with the FeatureManager.
+     * @param socket
+     */
+    // TODO: is unregister(socket) necessary?
+    register(socket) {
+        // TODO: add an ack function in socket.on(event) ?
+        socket.on('send', (data) => {
+            this._onReceive(data);
+        });
+        socket.on('request', (data) => {
+            this._onRequest(data);
+        });
+    }
+
+    _onReceive(data) {
+        let name = data.name;
+        let payload = data.data;
+        let features = (name === '*') ? this.features : [this.getFeature(name)];
+        features.forEach((feature) => {
+            feature.onReceive(payload);
+        });
+    }
+
+    _onRequest(data) {
+        let name = data.name;
+        let payload = data.data;
+        let features = (name === '*') ? this.features : [this.getFeature(name)];
+        features.forEach((feature) => {
+            feature.onRequest(payload);
+        });
     }
 }
 
@@ -255,7 +268,7 @@ class ServerFeatureManager extends FeatureManager {
         Log.log('ServerFeatureManager', message);
     }
 
-    register(feature, featureData, callback) {
+    add(feature, featureData, callback) {
         let _callback = (_feature) => {
             // TODO: Standardize .setup(data) to return a promise? Or should this.setup be ran inside Feature.constructor?
             _feature.setup(featureData).then((hasClientFeature) => {
@@ -274,7 +287,7 @@ class ServerFeatureManager extends FeatureManager {
                 callback(_feature);
             }
         };
-        return super.register(feature, featureData, _callback);
+        return super.add(feature, featureData, _callback);
     }
 }
 

@@ -28,13 +28,13 @@ const { ServerFeatureManager } = require('./features/features');
 const featureMgr = new ServerFeatureManager(io, app);
 
 const Lightswitches = require('./features/lightswitches');
-let lightswitches = featureMgr.register(Lightswitches, huebris.lightswitches);
+let lightswitches = featureMgr.add(Lightswitches, huebris.lightswitches);
 
 const Thermometer = require('./features/thermometer');
-let thermo = featureMgr.register(Thermometer, huebris.thermostat);
+let thermo = featureMgr.add(Thermometer, huebris.thermostat);
 
 const Weather = require('./features/weather');
-let weather = featureMgr.register(Weather, huebris.weather);
+let weather = featureMgr.add(Weather, huebris.weather);
 
 const features = featureMgr.features;
 function getFeatureList() {
