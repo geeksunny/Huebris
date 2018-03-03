@@ -20,6 +20,10 @@ class Feature {
         return this._featureManager;
     }
 
+    log(message) {
+        this._featureManager.log(message);
+    }
+
     setup(data) {
         throw "Not implemented!"
     }

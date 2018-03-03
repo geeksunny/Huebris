@@ -36,7 +36,7 @@ class ThermometerServer extends ServerFeature {
         this._thermostat.farenheit = data.farenheit;
         this._thermostat.timeout = data.timeout;
         this._thermostat.callback = (readings) => {
-            console.log(`Broadcasting updated thermostat readings. ${JSON.stringify(readings)}`);
+            this.log(`Broadcasting updated thermostat readings. ${JSON.stringify(readings)}`);
             this.manager._broadcast("updateThermostat", readings);
         };
         try {

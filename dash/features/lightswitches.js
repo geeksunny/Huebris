@@ -94,14 +94,14 @@ class Lightswitches extends ServerFeature {
                     let {type, options} = groupSwitch;
                     options.client = hueClient;
                     options.callback = (item, argument) => {
-                        console.log(`CALLBACK CALLED FOR (${group}, ${options.name}, ${argument})`);
+                        this.log(`CALLBACK CALLED FOR (${group}, ${options.name}, ${argument})`);
                         this.manager._broadcast('updateLightswitch',
                             { group: group, name: options.name, argument: argument, item: item });
                     };
                     this._switches[group][options.name] = new Switches[type](options);
                 } catch (err) {
-                    console.log('ERROR INITIALIZING SWITCH FROM CONFIG: '+groupSwitch);
-                    console.log(err);
+                    this.log('ERROR INITIALIZING SWITCH FROM CONFIG: '+groupSwitch);
+                    this.log(err);
                 }
             }
         }
@@ -112,7 +112,7 @@ class Lightswitches extends ServerFeature {
         let parent = this;
         let _callback = (data) => {
             let {type, group, action} = data;
-            console.log(`Lightswitch invoked. TYPE: ${type} | GROUP: ${group} | ACTION: ${action}`);
+            this.log(`Lightswitch invoked. TYPE: ${type} | GROUP: ${group} | ACTION: ${action}`);
 
             if (action === 'request') {
                 let targets = (typeof group === 'undefined') ? Object.getOwnPropertyNames(parent._switches) : [ group ];
